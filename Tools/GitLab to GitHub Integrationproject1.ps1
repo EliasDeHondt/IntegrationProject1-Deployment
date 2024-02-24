@@ -1,5 +1,3 @@
-@echo off
-
 mkdir lokalerepo
 cd lokalerepo
 git clone https://gitlab.com/kdg-ti/integratieproject-1/202324/23_codeforge/development.git/
