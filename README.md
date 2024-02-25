@@ -2,7 +2,7 @@
 
 
 ## Project [Integration Project 1 - Deployment] Second year exercises of training applied computer science at KdG.
-
+> Some parts may be in Dutch.
 
 ## 3️⃣ Sprint
 
