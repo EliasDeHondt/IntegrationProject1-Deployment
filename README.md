@@ -8,17 +8,18 @@
 
 - [ ] Deployment Infrastructure Architecture
 - [ ] Network drawing
-    - [Network Drawing](/Images/Network-Drawing.png)
+    - [ ] [Network Drawing](/Images/Network-Drawing.png)
 - [ ] Infra deploy automation: `Bash scripts`
-    - [Create Infrastructure Script](/Scripts/Create-Infrastructure.sh)
-    - [Delete Infrastructure Script](/Scripts/Delete-Infrastructure.sh)
+    - [ ] [Create Infrastructure Script](/Scripts/Create-Infrastructure.sh)
+    - [ ] [Delete Infrastructure Script](/Scripts/Delete-Infrastructure.sh)
 - [ ] Instructions for deployment
-    - [Instructions GCloud](/Documentation/Instructions-GCloud.md)
-    - [Instructions for Deployment](/Documentation/Instructions-Deployment.md)
+    - [x] [Instructions GCloud](/Documentation/Instructions-GCloud.md)
+    - [ ] [Instructions MVP Deployment](/Documentation/Instructions-MVP-Deployment.md)
+    - [ ] [Instructions for Deployment](/Documentation/Instructions-Deployment.md)
 - [ ] Instructions for configuration
-    - [Instructions for Configuration](/Documentation/Instructions-Configuration.md)
+    - [ ] [Instructions for Configuration](/Documentation/Instructions-Configuration.md)
 - [ ] Instructions for restoring a backup
-    - [GitLab to GitHub Backup](/Scripts/GitLab-to-GitHub-Backup.ps1)
-    - [Instructions for Restoring a Backup](/Documentation/Instructions-Restore-Backup.md)
+    - [x] [GitLab to GitHub Backup](/Scripts/GitLab-to-GitHub-Backup.ps1)
+    - [ ] [Instructions for Restoring a Backup](/Documentation/Instructions-Restore-Backup.md)
 - [x] Risk Analysis
-    - [Risk Analysis](/Documentation/Risk-Analysis.md)
+    - [x] [Risk Analysis](/Documentation/Risk-Analysis.md)
