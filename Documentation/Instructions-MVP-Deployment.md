@@ -1,7 +1,7 @@
 ![logo](/Images/logo.png)
-# 💙🤍Instructions Go App in the App Engine🤍💙
+# 💙🤍Instructions MVP Deployment🤍💙
 
-Create a Go app in the App Engine flexible environment using the Cloud CLI.
+
 
 ---
 
@@ -15,7 +15,7 @@ Create a Go app in the App Engine flexible environment using the Cloud CLI.
 
 ## 🖖Introduction
 
-This quickstart demonstrates how to create and deploy an app that displays a short message. The sample application uses Go version 1.18. You can use the same code sample for Go 1.18 and later, by specifying the version in your `app.yaml`.
+
 
 ## ✨Steps
 
