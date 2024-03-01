@@ -3,6 +3,7 @@
 # @see https://eliasdh.com #
 # @since 01/03/2024        #
 ############################
+# FUNCTIE: This script is used to backup the GitLab repositories to GitHub.
 
 # Create a new directory
 New-Item -ItemType Directory -Path "localrepo"
