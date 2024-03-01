@@ -1,7 +1,7 @@
 ############################
 # @author Elias De Hondt   #
 # @see https://eliasdh.com #
-# @since 01/02/2024        #
+# @since 01/03/2024        #
 ############################
 
 # Create a new directory

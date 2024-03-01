@@ -1,5 +1,5 @@
 ![logo](/Images/logo.png)
-# 💙🤍How To Configure GCloud CLI🤍💙
+# 💙🤍Instructions GCloud CLI🤍💙
 
 This is a guide on how to configure the Google Cloud CLI.
 
