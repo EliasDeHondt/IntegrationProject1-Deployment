@@ -8,7 +8,7 @@ This is a guide on how to configure the Google Cloud CLI.
 ## 📘Table of Contents
 
 1. [Introduction](#introduction)
-3. [Steps](#steps)
+2. [Steps](#steps)
     1. [Step 1: Update and upgrade system](#step-1-update-and-upgrade-system)
     2. [Step 2: Install tools](#step-2-install-tools)
     3. [Step 3: Import the Google Cloud public key](#step-3-import-the-google-cloud-public-key)
@@ -16,8 +16,8 @@ This is a guide on how to configure the Google Cloud CLI.
     5. [Step 5: Update and install the gcloud CLI](#step-5-update-and-install-the-gcloud-cli)
     6. [Step 6: (Optional) Install any of the following additional components](#step-6-optional-install-any-of-the-following-additional-components)
     7. [Step 7: Run gcloud init to get started](#step-7-run-gcloud-init-to-get-started)
-4. [Extra](#extra)
-5. [Links](#links)
+3. [Extra](#extra)
+4. [Links](#links)
 
 ---
 
