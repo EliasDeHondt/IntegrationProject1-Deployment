@@ -1,4 +1,4 @@
-![logo](/Images/logo.png)
+![logo](https://eliasdh.com/assets/media/images/logo-github.png)
 # 💙🤍Risk Analysis🤍💙
 
 This document is a comprehensive risk analysis of the project. It is crucial to identify potential risks and establish effective mitigation strategies. **This document will be regularly updated as the project progresses.**

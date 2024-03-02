@@ -1,4 +1,4 @@
-![logo](/Images/logo.png)
+![logo](https://eliasdh.com/assets/media/images/logo-github.png)
 # 💙🤍Instructions GCloud CLI🤍💙
 
 This is a guide on how to configure the Google Cloud CLI.

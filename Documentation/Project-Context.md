@@ -1,4 +1,4 @@
-![logo](/Images/logo.png)
+![logo](https://eliasdh.com/assets/media/images/logo-github.png)
 # 💙🤍Project Context🤍💙
 
 This document provides an overview of the project's context, including the collaboration, objectives, roles, and non-functional requirements. It also outlines the material and technology requirements, usability, and performance expectations.
