@@ -1,6 +1,7 @@
-# 🔎LICENSE🔎
+![logo](https://eliasdh.com/assets/media/images/logo-github.png)
+# 💙🤍LICENSE🤍💙
 
-Copyright © CodeForge. All rights Reserved.
+Copyright © EliasDH. All rights Reserved.
 
 No person is hereby granted, without charge, the permission to obtain a copy
 of this software and associated documentation files (the "Software"), to deal

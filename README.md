@@ -1,8 +1,18 @@
-# IntegrationProject1-Deployment
+![logo](https://eliasdh.com/assets/media/images/logo-github.png)
+# 💙🤍Integration Project 1 Deployment🤍💙
 
-
-## Project [Integration Project 1 - Deployment] Second year exercises of training applied computer science at KdG.
+Project [Integration Project 1 - Deployment] Second year exercises of training applied computer science at KdG.
 > Some parts may be in Dutch.
+
+---
+
+## 📘Table of Contents
+
+1. [To Do Deployment](#-to-do-deployment)
+2. [References](#-references)
+3. [Links](#-links)
+
+---
 
 ## 📚To Do Deployment
 
@@ -28,3 +38,7 @@
 ## 📚References
 
 - [DotNet Hello World](https://github.com/EliasDeHondt/DotNet-HelloWorld)
+
+## 🔗Links
+- 👯 Web hosting company [EliasDH.com](https://eliasdh.com).
+- 📫 How to reach us eliasdehondt@outlook.com.

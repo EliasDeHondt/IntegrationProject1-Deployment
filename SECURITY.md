@@ -1,4 +1,5 @@
-# 🔎SECURITY🔎
+![logo](https://eliasdh.com/assets/media/images/logo-github.png)
+# 💙🤍SECURITY🤍💙
 
 ## Reporting a Vulnerability
 
