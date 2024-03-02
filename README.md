@@ -8,9 +8,9 @@ Project [Integration Project 1 - Deployment] Second year exercises of training a
 
 ## 📘Table of Contents
 
-1. [To Do Deployment](#-to-do-deployment)
-2. [References](#-references)
-3. [Links](#-links)
+1. [To Do Deployment](#to-do-deployment)
+2. [References](#references)
+3. [Links](#links)
 
 ---
 
