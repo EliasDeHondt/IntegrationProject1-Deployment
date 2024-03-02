@@ -1,22 +1,19 @@
 ![logo](https://eliasdh.com/assets/media/images/logo-github.png)
 # 💙🤍Project Context🤍💙
 
-This document provides an overview of the project's context, including the collaboration, objectives, roles, and non-functional requirements. It also outlines the material and technology requirements, usability, and performance expectations.
-
----
-
 ## 📘Table of Contents
 
-1. [Introduction](#introduction)
-2. [Context](#introduction)
-    - [Project Collaboration](#project-collaboration)
-    - [Project Overview](#project-overview)
-    - [Project Objectives](#project-objectives)
-    - [Roles and Users](#roles-and-users)
-    - [Non-functional Requirements](#non-functional-requirements)
-    - [Material and Technology](#material-and-technology)
-    - [Usability and Performance](#usability-and-performance)
-3. [Links](#links)
+1. [📘Table of Contents](#📘table-of-contents)
+2. [🖖Introduction](#🖖introduction)
+3. [📑Context](#📑context)
+    1. [Project Collaboration](#project-collaboration)
+    2. [Project Overview](#project-overview)
+    3. [Project Objectives](#project-objectives)
+    4. [Roles and Users](#roles-and-users)
+    5. [Non-functional Requirements](#non-functional-requirements)
+    6. [Material and Technology](#material-and-technology)
+    7. [Usability and Performance](#usability-and-performance)
+4. [🔗Links](#🔗links)
 
 ---
 

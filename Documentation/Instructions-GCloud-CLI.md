@@ -1,23 +1,20 @@
 ![logo](https://eliasdh.com/assets/media/images/logo-github.png)
 # 💙🤍Instructions GCloud CLI🤍💙
 
-This is a guide on how to configure the Google Cloud CLI.
-
----
-
 ## 📘Table of Contents
 
-1. [Introduction](#introduction)
-2. [Steps](#steps)
-    1. [Step 1: Update and upgrade system](#step-1-update-and-upgrade-system)
-    2. [Step 2: Install tools](#step-2-install-tools)
-    3. [Step 3: Import the Google Cloud public key](#step-3-import-the-google-cloud-public-key)
-    4. [Step 4: Add the gcloud CLI distribution URI as a package source](#step-4-add-the-gcloud-cli-distribution-uri-as-a-package-source)
-    5. [Step 5: Update and install the gcloud CLI](#step-5-update-and-install-the-gcloud-cli)
-    6. [Step 6: (Optional) Install any of the following additional components](#step-6-optional-install-any-of-the-following-additional-components)
-    7. [Step 7: Run gcloud init to get started](#step-7-run-gcloud-init-to-get-started)
-3. [Extra](#extra)
-4. [Links](#links)
+1. [📘Table of Contents](#📘table-of-contents)
+2. [🖖Introduction](#🖖introduction)
+3. [✨Steps](#✨steps)
+    1. [👉Step 1: Update and upgrade system](#👉step-1-update-and-upgrade-system)
+    2. [👉Step 2: Install tools](#👉step-2-install-tools)
+    3. [👉Step 3: Import the Google Cloud public key](#👉step-3-import-the-google-cloud-public-key)
+    4. [👉Step 4: Add the gcloud CLI distribution URI as a package source](#👉step-4-add-the-gcloud-cli-distribution-uri-as-a-package-source)
+    5. [👉Step 5: Update and install the gcloud CLI](#👉step-5-update-and-install-the-gcloud-cli)
+    6. [👉Step 6: (Optional) Install any of the following additional components](#👉step-6-optional-install-any-of-the-following-additional-components)
+    7. [👉Step 7: Run gcloud init to get started](#👉step-7-run-gcloud-init-to-get-started)
+4. [📦Extra](#📦extra)
+5. [🔗Links](#🔗links)
 
 ---
 
@@ -27,19 +24,19 @@ The Google Cloud CLI is a command-line tool that provides a way to manage resour
 
 ## ✨Steps
 
-### 👉 Step 1: Update and upgrade system
+### 👉Step 1: Update and upgrade system
     
 ```bash
 sudo apt-get update && sudo apt-get upgrade -y
 ```
 
-### 👉 Step 2: Install tools
+### 👉Step 2: Install tools
 
 ```bash
 sudo apt-get install apt-transport-https ca-certificates gnupg curl sudo
 ```
 
-### 👉 Step 3: Import the Google Cloud public key
+### 👉Step 3: Import the Google Cloud public key
 
 - For newer distributions (Debian 9+ or Ubuntu 18.04+) run the following command:
     ```bash
@@ -56,7 +53,7 @@ sudo apt-get install apt-transport-https ca-certificates gnupg curl sudo
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
     ```
 
-### 👉 Step 4: Add the gcloud CLI distribution URI as a package source
+### 👉Step 4: Add the gcloud CLI distribution URI as a package source
 
 - For newer distributions (Debian 9+ or Ubuntu 18.04+), run the following command:
     ```bash
@@ -70,7 +67,7 @@ sudo apt-get install apt-transport-https ca-certificates gnupg curl sudo
 
 > Note: Make sure you don't have duplicate entries for the cloud-sdk repo in /etc/apt/sources.list.d/google-cloud-sdk.list. If you have duplicate entries, remove them.
 
-### 👉 Step 5: Update and install the gcloud CLI
+### 👉Step 5: Update and install the gcloud CLI
 
 ```bash
 sudo apt-get update && sudo apt-get install google-cloud-cli
@@ -87,7 +84,7 @@ sudo apt-get update && sudo apt-get install google-cloud-cli
         RUN echo "deb http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && apt-get update -y && apt-get install google-cloud-sdk -y
         ```
 
-### 👉 Step 6: (Optional) Install any of the following additional components
+### 👉Step 6: (Optional) Install any of the following additional components
 
 - google-cloud-cli
 - google-cloud-cli-anthos-auth
@@ -121,7 +118,7 @@ sudo apt-get update && sudo apt-get install google-cloud-cli
 sudo apt-get install google-cloud-sdk google-cloud-sdk-anthos-auth google-cloud-sdk-app-engine-go google-cloud-sdk-app-engine-grpc google-cloud-sdk-app-engine-java google-cloud-sdk-app-engine-python google-cloud-sdk-app-engine-python-extras google-cloud-sdk-bigtable-emulator google-cloud-sdk-cbt google-cloud-sdk-cloud-build-local google-cloud-sdk-cloud-run-proxy google-cloud-sdk-config-connector google-cloud-sdk-datastore-emulator google-cloud-sdk-firestore-emulator google-cloud-sdk-gke-gcloud-auth-plugin google-cloud-sdk-kpt google-cloud-sdk-kubectl-oidc google-cloud-sdk-local-extract google-cloud-sdk-minikube google-cloud-sdk-nomos google-cloud-sdk-pubsub-emulator google-cloud-sdk-skaffold google-cloud-sdk-spanner-emulator google-cloud-sdk-terraform-validator google-cloud-sdk-tests kubectl
 ```
 
-### 👉 Step 7: Run gcloud init to get started
+### 👉Step 7: Run gcloud init to get started
 
 ```bash
 gcloud init

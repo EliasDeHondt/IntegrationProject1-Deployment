@@ -1,31 +1,27 @@
 ![logo](https://eliasdh.com/assets/media/images/logo-github.png)
 # 💙🤍Risk Analysis🤍💙
 
-This document is a comprehensive risk analysis of the project. It is crucial to identify potential risks and establish effective mitigation strategies. **This document will be regularly updated as the project progresses.**
-
----
-
 ## 📘Table of Contents
 
-1. [Introduction](#introduction)
-2. [Risk Analysis](#risk-analysis)
-     1. [Deployment Risks](#deployment-risks)
-          1. [GitLab Outage](#gitlab-outage)
-          2. [Google Cloud Outage](#google-cloud-outage)
-     2. [Performance Risks](#performance-risks)
-          1. [Resource Exhaustion](#resource-exhaustion)
-          2. [Database Performance](#database-performance)
-     3. [Security Risks](#security-risks)
-          1. [Data Breach](#data-breach)
-     4. [Operational Risks](#operational-risks)
-          1. [Server Downtime](#server-downtime)
-3. [Links](#links)
+1. [📘Table of Contents](#📘table-of-contents)
+2. [🖖Introduction](#🖖introduction)
+3. [🔍Risk Analysis](#🔍risk-analysis)
+    1. [🚀Deployment Risks](#4.1-🚀deployment-risks)
+          1. [🚀GitLab Outage](#4.1-🚀gitlab-outage)
+          2. [🚀Google Cloud Outage](#4.2-🚀google-cloud-outage)
+    2. [📉Performance Risks](#4.2-📉performance-risks)
+          1. [📉Resource Exhaustion](#4.1-📉resource-exhaustion)
+          2. [📉Database Performance](#4.2-📉database-performance)
+    3. [🛡️Security Risks](#4.3-🛡️security-risks)
+          1. [🛡️Data Breach](#4.1-🛡️data-breach)
+    4. [🛠️Operational Risks](#4.4-🛠️operational-risks)
+          1. [🛠️Server Downtime](#4.1-🛠️server-downtime)
 
 ---
 
 ## 🖖Introduction
 
-Provide an overview of the project, its goals, and the importance of risk analysis. This 
+This document is a comprehensive risk analysis of the project. It is crucial to identify potential risks and establish effective mitigation strategies. **This document will be regularly updated as the project progresses.**
 
 ---
 
@@ -80,8 +76,6 @@ Provide an overview of the project, its goals, and the importance of risk analys
 - **Impact:** High
 - **Probability:** Low
 - **Mitigation:** Monitor Google cloud credit limit and set up alerts.
-
----
 
 ## 🔗Links
 
