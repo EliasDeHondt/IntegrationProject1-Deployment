@@ -4,7 +4,7 @@
 # @see https://eliasdh.com #
 # @since 01/03/2024        #
 ############################
-# FUNCTIE: This is de script to delete the GCloud infrastructure.
+# FUNCTIE: This is de script to delete the GCloud infrastructure MVP.
 reset='\e[0m'
 rood='\e[0;31m'
 blauw='\e[0;34m'
@@ -20,7 +20,7 @@ function error_exit() {
 clear
 echo "*********************************************"
 echo "*                                           *"
-echo -e "*     ${blauw}Running CodeForge delete script.${reset}      *"
+echo -e "*    ${blauw}Running CodeForge delete script MVP.${reset}    *"
 echo "*                                           *"
 echo "*********************************************"
 

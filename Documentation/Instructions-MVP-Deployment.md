@@ -30,6 +30,11 @@
     ```
 - Insall the Google Cloud CLI [Instructions GCloud CLI](https://github.com/EliasDeHondt/IntegrationProject1-Deployment/blob/main/Documentation/Instructions-GCloud-CLI.md)
 
+- Enable the Cloud SQL Admin API
+    ```bash	
+    gcloud services enable sqladmin.googleapis.com
+    ```
+
 ### 👉Step 1: Create PostgreSQL Database (Google Cloud SQL)
 
 - Create a PostgreSQL database in the Google Cloud Console
