@@ -72,6 +72,11 @@
 
 ## 📦Extra
 
+- Delete a PostgreSQL database in the Google Cloud Console
+    ```bash	
+    gcloud sql databases delete codeforge --instance=db1 --quiet
+    ```
+
 - Get Connection String
     ```bash
     gcloud sql instances describe db1 --format="value(connectionName)"
