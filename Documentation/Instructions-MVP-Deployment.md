@@ -65,7 +65,7 @@
 
 - Create a PostgreSQL database in the Google Cloud Console
     ```bash	
-    gcloud sql instances create db1 --database-version=POSTGRES_13 --tier=db-f1-micro --region=europe-west1
+    gcloud sql instances create db1 --database-version=POSTGRES_13 --tier=db-f1-micro --region=europe-west1 --require-ssl
     ```
 
 - Create a database user
@@ -76,6 +76,11 @@
 - Create a database
     ```bash
     gcloud sql databases create codeforge --instance=db1
+    ```
+
+- Open the firewall for the Cloud SQL instance
+    ```bash
+    gcloud compute firewall-rules create allow-postgresql --allow=tcp:5432
     ```
 
 ### 👉Step x: Create Bucket (Google Cloud Storage)
