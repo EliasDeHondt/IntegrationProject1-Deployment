@@ -30,7 +30,29 @@
     ```
 - Insall the Google Cloud CLI [Instructions GCloud CLI](https://github.com/EliasDeHondt/IntegrationProject1-Deployment/blob/main/Documentation/Instructions-GCloud-CLI.md)
 
+### 👉Step 1: Create PostgreSQL Database (Google Cloud SQL)
 
+- Create a PostgreSQL database in the Google Cloud Console
+    ```bash	
+    gcloud sql instances create PostgreSQL --database-version=POSTGRES_13 --region=europe-west1
+    ```
+
+- Create a database user
+    ```bash
+    gcloud sql users create admin --instance=PostgreSQL --password=123
+    ```
+    
+- Create a database
+    ```bash
+    gcloud sql databases create mydatabase --instance=PostgreSQL
+    ```
+
+### 👉Step 2: Create Bucket (Google Cloud Storage)
+
+- Create a bucket in the Google Cloud Console
+    ```bash	
+    gsutil mb -l europe-west1 gs://mybucket
+    ```
 
 
 ## 🔗Links
