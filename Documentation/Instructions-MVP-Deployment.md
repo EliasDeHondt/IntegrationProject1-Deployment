@@ -35,7 +35,33 @@
     gcloud services enable sqladmin.googleapis.com
     ```
 
-### 👉Step 1: Create PostgreSQL Database (Google Cloud SQL)
+- Make sure to create your application first.
+    ```bash	
+    gcloud app create --region=europe-west1 --project=PROJECT_ID 
+    ```
+
+#### 👉Step 1: Clone The GitHub Repository
+
+- Clone the repository
+    ```bash
+    git clone https://github.com/EliasDeHondt/ComputerProgramming2.git
+    ```
+- Navigate to the project folder
+    ```bash
+    cd ComputerProgramming2
+    ```
+
+
+
+
+
+
+
+
+
+
+
+### 👉Step x: Create PostgreSQL Database (Google Cloud SQL)
 
 - Create a PostgreSQL database in the Google Cloud Console
     ```bash	
@@ -52,23 +78,12 @@
     gcloud sql databases create codeforge --instance=db1
     ```
 
-### 👉Step 2: Create Bucket (Google Cloud Storage)
+### 👉Step x: Create Bucket (Google Cloud Storage)
 
 - Create a bucket in the Google Cloud Console
     ```bash	
     gsutil mb -l europe-west1 gs://mybucket
     ```
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -102,7 +117,7 @@
     PASSWORD="123"
 
     # Haal het primaire IP-adres op
-    IP_ADDRESS=$(gcloud sql instances describe $INSTANCE_NAME --format="value(ipAddresses.ipAddress)")
+    IP_ADDRESS=$(gcloud sql instances describe $INSTANCE_NAME --format="value(ipAddresses[0].ipAddress)")
 
     # Stel de standaard poort in
     PORT=5432
