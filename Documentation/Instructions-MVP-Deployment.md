@@ -34,17 +34,17 @@
 
 - Create a PostgreSQL database in the Google Cloud Console
     ```bash	
-    gcloud sql instances create PostgreSQL --database-version=POSTGRES_13 --region=europe-west1
+    gcloud sql instances create db1 --database-version=POSTGRES_13 --tier=db-f1-micro --region=europe-west1
     ```
 
 - Create a database user
     ```bash
-    gcloud sql users create admin --instance=PostgreSQL --password=123
+    gcloud sql users create admin --instance=db1 --password=123
     ```
     
 - Create a database
     ```bash
-    gcloud sql databases create mydatabase --instance=PostgreSQL
+    gcloud sql databases create codeforge --instance=db1
     ```
 
 ### 👉Step 2: Create Bucket (Google Cloud Storage)
@@ -54,6 +54,54 @@
     gsutil mb -l europe-west1 gs://mybucket
     ```
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 📦Extra
+
+- Get Connection String
+    ```bash
+    gcloud sql instances describe db1 --format="value(connectionName)"
+    ```
+    Or
+    ```bash
+    #!/bin/bash
+    ############################
+    # @author Elias De Hondt   #
+    # @see https://eliasdh.com #
+    # @since 01/03/2024        #
+    ############################
+    # FUNCTIE: This script is used to get the connection string for a Cloud SQL instance
+
+    # Vervang deze waarden door de werkelijke waarden voor je Cloud SQL-instance en gebruiker
+    INSTANCE_NAME="db1"
+    USER_NAME="admin"
+    PASSWORD="123"
+
+    # Haal het primaire IP-adres op
+    IP_ADDRESS=$(gcloud sql instances describe $INSTANCE_NAME --format="value(ipAddresses.ipAddress)")
+
+    # Stel de standaard poort in
+    PORT=5432
+
+    # Stel de verbindingsreeks samen
+    CONNECTION_STRING="Host=${IP_ADDRESS};Port=${PORT};Database=codeforge;User Id=${USER_NAME};Password=${PASSWORD}"
+
+    echo "Connection String: ${CONNECTION_STRING}"
+    ```
 
 ## 🔗Links
 - 👯 Web hosting company [EliasDH.com](https://eliasdh.com).
