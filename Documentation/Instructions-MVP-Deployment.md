@@ -44,11 +44,11 @@
 
 - Clone the repository
     ```bash
-    git clone https://github.com/EliasDeHondt/ComputerProgramming2.git
+    git clone https://github.com/EliasDeHondt/IntegrationProject1-Development.git
     ```
 - Navigate to the project folder
     ```bash
-    cd ComputerProgramming2
+    cd IntegrationProject1-Development
     ```
 
 
