@@ -27,8 +27,8 @@ Please also see following documents:
 - [ ] Network drawing
     - [ ] [Network Drawing](/Images/Network-Drawing.png)
 - [ ] Infra deploy automation: `Bash scripts`
-    - [ ] [Create Infrastructure Script](/Scripts/Create-Infrastructure.sh)
-    - [ ] [Delete Infrastructure Script](/Scripts/Delete-Infrastructure.sh)
+    - [ ] [Create Infrastructure Script (IaC)](/Scripts/Create-Infrastructure-IaC.sh)
+    - [ ] [Delete Infrastructure Script (IaC)](/Scripts/Delete-Infrastructure-IaC.sh)
 - [ ] Instructions for deployment
     - [x] [Instructions GCloud](/Documentation/Instructions-GCloud.md)
     - [ ] [Instructions MVP Deployment](/Documentation/Instructions-MVP-Deployment.md)
