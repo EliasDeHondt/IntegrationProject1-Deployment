@@ -69,10 +69,12 @@
     gcloud sql users create admin --instance=db1 --password=123
     gcloud sql users delete postgres --instance=db1 --quiet
     ```
-- Create a database
+- Create a database and delete the default database
     ```bash
     gcloud sql databases create codeforge --instance=db1
+    gcloud sql databases delete postgres --instance=db1 --quiet
     ```
+    
 
 ### 👉Step x: Create Bucket (Google Cloud Storage)
 
@@ -95,10 +97,6 @@
 
 - Get Connection String
     ```bash
-    gcloud sql instances describe db1 --format="value(connectionName)"
-    ```
-    Or
-    ```bash
     #!/bin/bash
     ############################
     # @author Elias De Hondt   #
@@ -106,20 +104,14 @@
     # @since 01/03/2024        #
     ############################
     # FUNCTIE: This script is used to get the connection string for a Cloud SQL instance
-
-    # Vervang deze waarden door de werkelijke waarden voor je Cloud SQL-instance en gebruiker
     INSTANCE_NAME="db1"
     USER_NAME="admin"
     PASSWORD="123"
-
-    # Haal het primaire IP-adres op
-    IP_ADDRESS=$(gcloud sql instances describe $INSTANCE_NAME --format="value(ipAddresses[0].ipAddress)")
-
-    # Stel de standaard poort in
     PORT=5432
 
-    # Stel de verbindingsreeks samen
-    CONNECTION_STRING="Host=${IP_ADDRESS};Port=${PORT};Database=codeforge;User Id=${USER_NAME};Password=${PASSWORD}"
+    IP_ADDRESS=$(gcloud sql instances describe $INSTANCE_NAME --format="value(ipAddresses[0].ipAddress)")
+
+    CONNECTION_STRING="Host=${IP_ADDRESS};Port=${PORT};Database=codeforge;User Id=${USER_NAME};Password=${PASSW>
 
     echo "Connection String: ${CONNECTION_STRING}"
     ```
