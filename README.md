@@ -24,8 +24,8 @@ Please also see following documents:
 
 ### 📚To Do Deployment
 - [ ] Deployment Infrastructure Architecture
-- [ ] Network drawing
-    - [ ] [Network Drawing](/Images/Network-Drawing.png)
+- [x] Network drawing
+    - [x] [Network Drawing](/Images/Network-Drawing.png)
 - [ ] Infra deploy automation: `Bash scripts`
     - [ ] [Create Infrastructure Script (IaC)](/Scripts/Create-Infrastructure-IaC.sh)
     - [ ] [Delete Infrastructure Script (IaC)](/Scripts/Delete-Infrastructure-IaC.sh)
