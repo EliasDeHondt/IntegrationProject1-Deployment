@@ -24,8 +24,12 @@ Please also see following documents:
 
 ### 📚To Do Deployment
 - [ ] Deployment Infrastructure Architecture
-- [x] Network drawing
-    - [x] [Network Drawing](/Images/Network-Drawing.png)
+    - [x] Network drawing
+        - [x] [Network Drawing](/Images/Network-Drawing.png)
+    - [x] Risk Analysis
+        - [x] [Risk Analysis](/Documentation/Risk-Analysis.md)
+    - [x] Project Context
+        - [x] [Project Context](/Documentation/Project-Context.md)
 - [ ] Infra deploy automation: `Bash scripts`
     - [ ] [Create Infrastructure Script (IaC)](/Scripts/Create-Infrastructure-IaC.sh)
     - [ ] [Delete Infrastructure Script (IaC)](/Scripts/Delete-Infrastructure-IaC.sh)
@@ -38,8 +42,7 @@ Please also see following documents:
 - [ ] Instructions for restoring a backup
     - [x] [GitLab to GitHub Backup](/Scripts/GitLab-to-GitHub-Backup.ps1)
     - [ ] [Instructions for Restoring a Backup](/Documentation/Instructions-Restore-Backup.md)
-- [x] Risk Analysis
-    - [x] [Risk Analysis](/Documentation/Risk-Analysis.md)
+
 
 ### 📚References
 - [DotNet Hello World](https://github.com/EliasDeHondt/DotNet-HelloWorld)
