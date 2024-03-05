@@ -40,7 +40,7 @@
     gcloud app create --region=europe-west1 --project=PROJECT_ID 
     ```
 
-#### 👉Step 1: Clone The GitHub Repository
+#### 👉Step x: Clone The GitHub Repository
 
 - Clone the repository
     ```bash
@@ -65,7 +65,7 @@
 
 - Create a PostgreSQL database in the Google Cloud Console
     ```bash	
-    gcloud sql instances create db1 --database-version=POSTGRES_13 --tier=db-f1-micro --region=europe-west1 --require-ssl
+    gcloud sql instances create db1 --database-version=POSTGRES_13 --tier=db-f1-micro --region=europe-west1 --authorized-networks=0.0.0.0/0
     ```
 
 - Create a database user
@@ -76,11 +76,6 @@
 - Create a database
     ```bash
     gcloud sql databases create codeforge --instance=db1
-    ```
-
-- Open the firewall for the Cloud SQL instance
-    ```bash
-    gcloud compute firewall-rules create allow-postgresql --allow=tcp:5432
     ```
 
 ### 👉Step x: Create Bucket (Google Cloud Storage)
