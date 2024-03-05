@@ -32,7 +32,7 @@ Please also see following documents:
 - [ ] Instructions for deployment
     - [x] [Instructions GCloud](/Documentation/Instructions-GCloud.md)
     - [ ] [Instructions MVP Deployment](/Documentation/Instructions-MVP-Deployment.md)
-    - [ ] [Instructions for Deployment](/Documentation/Instructions-Deployment.md)
+    - [ ] [Instructions for Deployment](/Documentation/Instructions-IaC-Deployment.md)
 - [ ] Instructions for configuration
     - [ ] [Instructions for Configuration](/Documentation/Instructions-Configuration.md)
 - [ ] Instructions for restoring a backup
