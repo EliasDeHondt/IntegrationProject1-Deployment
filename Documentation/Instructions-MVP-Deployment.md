@@ -41,6 +41,24 @@
     gcloud app create --region=europe-west1 --project=PROJECT_ID 
     ```
 
+### 👉Step x: Create PostgreSQL Database (Google Cloud SQL)
+
+- Create a PostgreSQL database in the Google Cloud Console
+    ```bash	
+    gcloud sql instances create db1 --database-version=POSTGRES_13 --tier=db-f1-micro --region=europe-west1 --authorized-networks=0.0.0.0/0
+    ```
+
+- Create a database user and delete the default user
+    ```bash
+    gcloud sql users create admin --instance=db1 --password=123
+    gcloud sql users delete postgres --instance=db1 --quiet
+    ```
+
+- Create a database and delete the default database
+    ```bash
+    gcloud sql databases delete postgres --instance=db1 --quiet
+    ```
+
 #### 👉Step x: Clone The GitHub Repository
 
 - Clone the repository
@@ -63,24 +81,7 @@
 
 
 
-### 👉Step x: Create PostgreSQL Database (Google Cloud SQL)
 
-- Create a PostgreSQL database in the Google Cloud Console
-    ```bash	
-    gcloud sql instances create db1 --database-version=POSTGRES_13 --tier=db-f1-micro --region=europe-west1 --authorized-networks=0.0.0.0/0
-    ```
-
-- Create a database user and delete the default user
-    ```bash
-    gcloud sql users create admin --instance=db1 --password=123
-    gcloud sql users delete postgres --instance=db1 --quiet
-    ```
-
-- Create a database and delete the default database
-    ```bash
-    gcloud sql databases create codeforge --instance=db1
-    gcloud sql databases delete postgres --instance=db1 --quiet
-    ```
     
 
 ### 👉Step x: Create Bucket (Google Cloud Storage)
