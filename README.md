@@ -23,13 +23,15 @@ Please also see following documents:
 ## 📦Extra
 
 ### 📚To Do Deployment
-- [ ] Deployment Infrastructure Architecture
+- [x] Deployment Infrastructure Architecture
+    - [x] Description Connectivity
+        - [x] [Description Connectivity](/Documentation/Deployment-Analyze-and-Architecture.md#💭description-connectivity)
     - [x] Network drawing
-        - [x] [Network Drawing](/Images/Network-Drawing.png)
+        - [x] [Network Drawing](/Documentation/Deployment-Analyze-and-Architecture.md#📷network-drawing)
     - [x] Risk Analysis
-        - [x] [Risk Analysis](/Documentation/Risk-Analysis.md)
+        - [x] [Risk Analysis](/Documentation/Deployment-Analyze-and-Architecture.md#🔍risk-analysis)
     - [x] Project Context
-        - [x] [Project Context](/Documentation/Project-Context.md)
+        - [x] [Project Context](/Documentation/Deployment-Analyze-and-Architecture.md#📑context)
 - [ ] Infra deploy automation: `Bash scripts`
     - [ ] [Create Infrastructure Script (IaC)](/Scripts/Create-Infrastructure-IaC.sh)
     - [ ] [Delete Infrastructure Script (IaC)](/Scripts/Delete-Infrastructure-IaC.sh)

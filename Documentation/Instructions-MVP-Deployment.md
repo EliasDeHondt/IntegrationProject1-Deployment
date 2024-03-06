@@ -22,16 +22,20 @@
     ```bash	
     sudo apt-get update && sudo apt-get upgrade -y
     ```
+
 - Install the .NET SDK 8.0 or later.
     ```bash	
     sudo apt-get install dotnet-sdk-8.0
     dotnet --version # Check if the installation was successful
     ```
+
 - Insall the Google Cloud CLI [Instructions GCloud CLI](https://github.com/EliasDeHondt/IntegrationProject1-Deployment/blob/main/Documentation/Instructions-GCloud-CLI.md)
+
 - Enable the Cloud SQL Admin API
     ```bash	
     gcloud services enable sqladmin.googleapis.com
     ```
+
 - Make sure to create your application first.
     ```bash	
     gcloud app create --region=europe-west1 --project=PROJECT_ID 
@@ -43,6 +47,7 @@
     ```bash
     git clone https://github.com/EliasDeHondt/IntegrationProject1-Development.git
     ```
+
 - Navigate to the project folder
     ```bash
     cd IntegrationProject1-Development
@@ -64,11 +69,13 @@
     ```bash	
     gcloud sql instances create db1 --database-version=POSTGRES_13 --tier=db-f1-micro --region=europe-west1 --authorized-networks=0.0.0.0/0
     ```
+
 - Create a database user and delete the default user
     ```bash
     gcloud sql users create admin --instance=db1 --password=123
     gcloud sql users delete postgres --instance=db1 --quiet
     ```
+
 - Create a database and delete the default database
     ```bash
     gcloud sql databases create codeforge --instance=db1
