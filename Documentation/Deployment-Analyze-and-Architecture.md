@@ -1,5 +1,5 @@
 ![logo](https://eliasdh.com/assets/media/images/logo-github.png)
-# 💙🤍Deployment Analyze and Architecture.md🤍💙
+# 💙🤍Deployment Analyze and Architecture🤍💙
 
 ## 📘Table of Contents
 
@@ -26,6 +26,8 @@
     5. [📑Non-functional Requirements](#📑non-functional-requirements)
     6. [📑Material and Technology](#📑material-and-technology)
     7. [📑Usability and Performance](#📑usability-and-performance)
+6. [🔗Links](#🔗links)
+
 ---
 
 ## 🖖Introduction
