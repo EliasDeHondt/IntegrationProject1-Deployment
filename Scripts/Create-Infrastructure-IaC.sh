@@ -18,31 +18,27 @@ function error_exit() {
   exit 1
 }
 
+# Functie: Succes afhandeling.
 function success_exit() {
-  echo -e "* ${groen}$1${reset}\n*"
+  echo -e "* ${groen}$1${reset}\n*\n${line}"
   exit 0
 }
 
-# Functie: Toon een voortgangsbalk
-function show_progress() {
-  local width=50
-  local progress=$1
-  local num_chars=$(($width * $progress / 100))
-  local num_spaces=$(($width - $num_chars))
-
-  printf "["
-  printf "%${num_chars}s" | tr ' ' '='
-  printf "%${num_spaces}s" | tr ' ' ' '
-  printf "] %d%%\r" $progress
+function success() {
+  echo -e "* ${groen}$1${reset}\n*"
 }
 
 # Functie: Print the welcome message.
-clear
-echo "$line"
-echo "*                                           *"
-echo -e "*     ${blauw}Running CodeForge create script.${reset}      *"
-echo "*                                           *"
-echo "$line"
+function welcome_message() {
+  clear
+  echo "$line"
+  echo "*                                           *"
+  echo -e "*     ${blauw}Running CodeForge create script.${reset}      *"
+  echo "*                                           *"
+  echo "$line"
+}
+
+welcome_message
 
 # Functie: Check of de script als root wordt uitgevoerd.
 [ "$EUID" -ne 0 ] && error_exit "Script must be run as root: sudo $0"
@@ -53,43 +49,72 @@ if [ ! command -v gcloud &> /dev/null ]; then
 fi
 
 # Start Deployment
-echo -e "* ${groen}Starting deployment...${reset}\n*"
+success "Starting deployment..."
 
 # Functie: Create a new project.
 gcloud projects create $Projectid &> /dev/null
 
 if [ $? -eq 0 ]; then
-  echo -e "* ${groen}Project creation successful.${reset}\n*"
+  success "Project created successfully."
 else
   error_exit "Failed to create the project. Check the error message above for details."
 fi
-
-# Toon voortgangsbalk (bijvoorbeeld, 25% voltooid)
-show_progress 25
-sleep 1
 
 # Functie: Set the project.
 gcloud config set project $Projectid &> /dev/null
 
 if [ $? -eq 0 ]; then
-  echo -e "* ${groen}Project set successfully.${reset}\n*"
+  success "Project set successfully."
 else
   error_exit "Failed to set the project. Check the error message above for details."
 fi
 
-# Toon voortgangsbalk (bijvoorbeeld, 50% voltooid)
-show_progress 50
-sleep 1
-
 # Functie: Link the billing account to the project.
+billing_account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)" | head -n 1)
 gcloud beta billing projects link $(gcloud config get-value project) --billing-account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)") &> /dev/null
 
-if [ $? -eq 0 ]; then
-  echo -e "* ${groen}Billing account linked successfully.${reset}\n*"
+if [ -n "$billing_account" ]; then
+  gcloud beta billing projects link $(gcloud config get-value project) --billing-account="$billing_account" &> /dev/null
+
+  if [ $? -eq 0 ]; then
+    success "Billing account linked successfully."
+  else
+    error_exit "Failed to link the billing account."
+  fi
 else
-  error_exit "Failed to link the billing account. Check the error message above for details."
+  error_exit "No billing accounts found. Please make sure you have a billing account set up for your Google Cloud project."
 fi
 
-# Toon voortgangsbalk (bijvoorbeeld, 100% voltooid)
-show_progress 100
-echo -e "\n"
+# Functie: Create a new PostgreSQL instance.
+gcloud sql instances create db1 \
+  --database-version=POSTGRES_15 \
+  --tier=db-f1-micro \
+  --region=europe-west1 \
+  --authorized-networks=0.0.0.0/0 &> /dev/null
+
+if [ $? -eq 0 ]; then
+  success "Cloud SQL instance created successfully."
+else
+  error_exit "Failed to create the Cloud SQL instance."
+fi
+
+# Functie: Create a new PostgreSQL user and delete the default user.
+gcloud sql users create admin --instance=db1 --password=123
+gcloud sql users delete postgres --instance=db1 --quiet
+
+if [ $? -eq 0 ]; then
+  success "Cloud SQL user created successfully."
+else
+  error_exit "Failed to create the Cloud SQL user."
+fi
+
+
+
+
+
+
+
+
+
+
+#success_exit "Infrastructure created successfully."
