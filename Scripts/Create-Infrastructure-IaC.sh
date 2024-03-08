@@ -9,7 +9,7 @@ reset='\e[0m'
 rood='\e[0;31m'
 blauw='\e[0;34m'
 groen='\e[0;32m'
-PROJECTID='codeforge-6969'
+PROJECTID='codeforge-$(date +%s)'
 line="*********************************************"
 
 # Functie: Error afhandeling.
@@ -43,7 +43,7 @@ fi
 echo -e "* ${groen}Starting deployment...${reset}\n*"
 
 # Functie: Create a new project.
-gcloud projects create $PROJECTID &> /dev/null
+gcloud projects create $PROJECTID #&> /dev/null
 
 if [ $? -eq 0 ]; then
   echo -e "* ${groen}Project creation successful.${reset}\n*"
@@ -52,7 +52,7 @@ else
 fi
 
 # Functie: Set the project.
-gcloud config set project $PROJECTID &> /dev/null
+gcloud config set project $PROJECTID #&> /dev/null
 
 if [ $? -eq 0 ]; then
   echo -e "* ${groen}Project set successfully.${reset}\n*"
@@ -61,7 +61,7 @@ else
 fi
 
 # Functie: Link the billing account to the project.
-gcloud beta billing projects link $(gcloud config get-value project) --billing-account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)") &> /dev/null
+gcloud beta billing projects link $(gcloud config get-value project) --billing-account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)") #&> /dev/null
 
 if [ $? -eq 0 ]; then
   echo -e "* ${groen}Billing account linked successfully.${reset}\n*"

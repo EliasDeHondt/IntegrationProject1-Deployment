@@ -31,7 +31,7 @@
 
 - Insall the Google Cloud CLI [Instructions GCloud CLI](https://github.com/EliasDeHondt/IntegrationProject1-Deployment/blob/main/Documentation/Instructions-GCloud-CLI.md)
 
-### 👉Step x: Create Environment / Project
+### 👉Step 1: Create Environment / Project
 
 - Create a new project in the Google Cloud Console
     ```bash	
