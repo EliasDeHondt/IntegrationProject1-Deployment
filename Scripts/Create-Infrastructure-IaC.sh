@@ -9,7 +9,7 @@ reset='\e[0m'
 rood='\e[0;31m'
 blauw='\e[0;34m'
 groen='\e[0;32m'
-PROJECTID='codeforge-$(date +%s)'
+Projectid="codeforge-$(date +%Y%m%d%H%M%S)"
 line="*********************************************"
 
 # Functie: Error afhandeling.
@@ -21,6 +21,19 @@ function error_exit() {
 function success_exit() {
   echo -e "* ${groen}$1${reset}\n*"
   exit 0
+}
+
+# Functie: Toon een voortgangsbalk
+function show_progress() {
+  local width=50
+  local progress=$1
+  local num_chars=$(($width * $progress / 100))
+  local num_spaces=$(($width - $num_chars))
+
+  printf "["
+  printf "%${num_chars}s" | tr ' ' '='
+  printf "%${num_spaces}s" | tr ' ' ' '
+  printf "] %d%%\r" $progress
 }
 
 # Functie: Print the welcome message.
@@ -43,7 +56,7 @@ fi
 echo -e "* ${groen}Starting deployment...${reset}\n*"
 
 # Functie: Create a new project.
-gcloud projects create $PROJECTID #&> /dev/null
+gcloud projects create $Projectid &> /dev/null
 
 if [ $? -eq 0 ]; then
   echo -e "* ${groen}Project creation successful.${reset}\n*"
@@ -51,8 +64,12 @@ else
   error_exit "Failed to create the project. Check the error message above for details."
 fi
 
+# Toon voortgangsbalk (bijvoorbeeld, 25% voltooid)
+show_progress 25
+sleep 1
+
 # Functie: Set the project.
-gcloud config set project $PROJECTID #&> /dev/null
+gcloud config set project $Projectid &> /dev/null
 
 if [ $? -eq 0 ]; then
   echo -e "* ${groen}Project set successfully.${reset}\n*"
@@ -60,11 +77,19 @@ else
   error_exit "Failed to set the project. Check the error message above for details."
 fi
 
+# Toon voortgangsbalk (bijvoorbeeld, 50% voltooid)
+show_progress 50
+sleep 1
+
 # Functie: Link the billing account to the project.
-gcloud beta billing projects link $(gcloud config get-value project) --billing-account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)") #&> /dev/null
+gcloud beta billing projects link $(gcloud config get-value project) --billing-account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)") &> /dev/null
 
 if [ $? -eq 0 ]; then
   echo -e "* ${groen}Billing account linked successfully.${reset}\n*"
 else
   error_exit "Failed to link the billing account. Check the error message above for details."
 fi
+
+# Toon voortgangsbalk (bijvoorbeeld, 100% voltooid)
+show_progress 100
+echo -e "\n"

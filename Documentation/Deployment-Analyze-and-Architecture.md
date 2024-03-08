@@ -87,14 +87,14 @@ This document provides an overview of the network architecture and risk analysis
 
 ### 1. 🚀Deployment Risks
 
-#### 4.1 🚀GitLab Outage
+#### 1.1 🚀GitLab Outage
 
 - **Risk:** Potential GitLab outages.
 - **Impact:** High
 - **Probability:** Low
 - **Mitigation:** Create multiple backups to an alternative Git service such as GitHub or Bitbucket.
 
-#### 4.2 🚀Google Cloud Outage
+#### 1.2 🚀Google Cloud Outage
 
 - **Risk:** Potential Google Cloud outages.
 - **Impact:** High
@@ -103,14 +103,14 @@ This document provides an overview of the network architecture and risk analysis
 
 ### 2. 📉Performance Risks
 
-#### 4.1 📉Resource Exhaustion
+#### 2.1 📉Resource Exhaustion
 
 - **Risk:** Resource exhaustion due to high traffic.
 - **Impact:** High
 - **Probability:** High
 - **Mitigation:** Implement a load balancer and auto-scaling to handle high traffic.
 
-#### 4.2 📉Database Performance
+#### 2.2 📉Database Performance
 
 - **Risk:** Database performance issues due to high traffic.
 - **Impact:** High
@@ -119,7 +119,7 @@ This document provides an overview of the network architecture and risk analysis
 
 ### 3. 🛡️Security Risks
 
-#### 4.1 🛡️Data Breach
+#### 3.1 🛡️Data Breach
 
 - **Risk:** Data breach due to security vulnerabilities.
 - **Impact:** High
@@ -134,6 +134,15 @@ This document provides an overview of the network architecture and risk analysis
 - **Impact:** High
 - **Probability:** Low
 - **Mitigation:** Monitor Google cloud credit limit and set up alerts.
+
+### 5. ☠️Loss of Employee
+
+#### 5.1 ☠️Loss of Employee
+
+- **Risk:** Loss of employee due to AI revolution.
+- **Impact:** High
+- **Probability:** High
+- **Mitigation:** Create documentation to transfer knowledge.
 
 ## 📑Context
 
