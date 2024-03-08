@@ -23,9 +23,9 @@
     sudo apt-get update && sudo apt-get upgrade -y
     ```
 
-- Install the .NET SDK 8.0 or later.
+- Install the .NET SDK 7.0 or later.
     ```bash	
-    sudo apt-get install dotnet-sdk-8.0
+    sudo apt-get install dotnet-sdk-7.0
     dotnet --version # Check if the installation was successful
     ```
 
@@ -35,12 +35,12 @@
 
 - Create a new project in the Google Cloud Console
     ```bash	
-    gcloud projects create PROJECT_ID
+    gcloud projects create $PROJECTID
     ```
 
 - Set the project
     ```bash
-    gcloud config set project PROJECT_ID
+    gcloud config set project $PROJECTID
     ```
 
 - Set the billing account
