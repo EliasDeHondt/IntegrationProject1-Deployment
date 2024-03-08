@@ -7,12 +7,17 @@
 2. [🖖Introduction](#🖖introduction)
 3. [✨Steps](#✨steps)
     1. [👉Step 0: Preparations](#👉step-0-preparations)
+    2. [👉Step 1: Create Environment / Project](#👉step-1-create-environment--project)
+    3. [👉Step 2: Create PostgreSQL Database (Google Cloud SQL)](#👉step-2-create-postgresql-database-google-cloud-sql)
+    4. [👉Step 3: Clone The GitHub Repository](#👉step-3-clone-the-github-repository)
+    5. [👉Step 4: Restore & Build The Project](#👉step-4-restore--build-the-project)
+    6. [👉Step 5: Deploy The Application](#👉step-5-deploy-the-application)
 
 ---
 
 ## 🖖Introduction
 
-
+This document will guide you through the process of deploying the MVP of the CodeForge application to the Google Cloud Platform. The MVP is a simple web application that is built using the .NET 7 framework. The application uses a PostgreSQL database to store data. The application is hosted on the Google Cloud Platform using the App Engine service. The database is hosted on the Google Cloud Platform using the Cloud SQL service. The application is deployed using the Google Cloud CLI.
 
 ## ✨Steps
 
@@ -59,7 +64,7 @@
     gcloud app create --region=europe-west1 --project=$(gcloud config get-value project)
     ```
 
-### 👉Step x: Create PostgreSQL Database (Google Cloud SQL)
+### 👉Step 2: Create PostgreSQL Database (Google Cloud SQL)
 
 - Create a PostgreSQL database in the Google Cloud Console (`This can take a few minutes`)
     ```bash	
@@ -72,7 +77,7 @@
     gcloud sql users delete postgres --instance=db1 --quiet
     ```
 
-#### 👉Step x: Clone The GitHub Repository
+### 👉Step 3: Clone The GitHub Repository
 
 - Clone the repository
     ```bash
@@ -84,7 +89,7 @@
     cd IntegrationProject1-Development
     ```
 
-#### 👉Step x: Restore & Build The Project
+### 👉Step 4: Restore & Build The Project
 
 - Restore the project
     ```bash
@@ -96,7 +101,7 @@
     dotnet build
     ```
 
-#### 👉Step x: Deploy The Application
+### 👉Step 5: Deploy The Application
 
 - Deploy the application (`This can take a few minutes`)
     ```bash
