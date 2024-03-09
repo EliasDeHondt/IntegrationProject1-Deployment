@@ -14,7 +14,7 @@ line="*********************************************"
 
 # Functie: Error afhandeling.
 function error_exit() {
-  echo -e "\n*\n* ${rood}$1${reset}\n*\n* Exiting script."
+  echo -e "\n*\n* ${rood}$1${reset}\n*\n* Exiting script.\n${line}"
   exit 1
 }
 
@@ -25,7 +25,7 @@ function success_exit() {
 }
 
 function success() {
-  echo -e "*\n* ${groen}$1${reset}\n*"
+  echo -e "\n*\n* ${groen}$1${reset}\n*"
 }
 
 # Functie: Print the welcome message.
@@ -43,7 +43,7 @@ function loading_icon() {
     local load_interval="${1}"
     local loading_message="${2}"
     local elapsed=0
-    local loading_animation=( '—' "\\" '|' '/' )
+    local loading_animation=( '⠾' "⠷" '⠯' '⠟' '⠻' '⠽' )
     echo -n "${loading_message} "
     tput civis
     trap "tput cnorm" EXIT
@@ -54,12 +54,16 @@ function loading_icon() {
         done
         elapsed=$(( elapsed + 1 ))
     done
-    printf " \b\n"
+    printf " \b"
+    exit 1
 }
 
 # Functie: Create a new project.
 function create_project() {
-  gcloud projects create '123' &> /dev/null
+  loading_icon 10 "* Stap 1/6:" &
+  gcloud projects create $Projectid > ./Create-Infrastructure-IaC.log 2>&1
+  wait
+
   if [ $? -eq 0 ]; then
     success "Project created successfully."
   else
@@ -69,7 +73,10 @@ function create_project() {
 
 # Functie: Set the project.
 function set_project() {
-  gcloud config set project $Projectid &> /dev/null
+  loading_icon 10 "* Stap 2/6:" &
+  gcloud config set project $Projectid > ./Create-Infrastructure-IaC.log 2>&1
+  wait
+
   if [ $? -eq 0 ]; then
     success "Project set successfully."
   else
@@ -79,8 +86,10 @@ function set_project() {
 
 # Functie: Link the billing account to the project.
 function link_billing_account() {
+  loading_icon 10 "* Stap 3/6:" &
   billing_account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)" | head -n 1)
-  gcloud beta billing projects link $(gcloud config get-value project) --billing-account="$billing_account" &> /dev/null
+  gcloud beta billing projects link $(gcloud config get-value project) --billing-account="$billing_account" > ./Create-Infrastructure-IaC.log 2>&1
+  wait
 
   if [ $? -eq 0 ]; then
     success "Billing account linked successfully."
@@ -89,13 +98,29 @@ function link_billing_account() {
   fi
 }
 
+# Functie: Enable the required APIs.
+function enable_apis() {
+  loading_icon 10 "* Stap 4/6:" &
+  gcloud services enable sqladmin.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
+  wait
+
+  if [ $? -eq 0 ]; then
+    success "APIs enabled successfully."
+  else
+    error_exit "Failed to enable the APIs."
+  fi
+
+}
+
 # Functie: Create a new PostgreSQL instance.
 function create_postgres_instance() {
+  loading_icon 600 "* Stap 5/6:" &
   gcloud sql instances create db1 \
     --database-version=POSTGRES_15 \
     --tier=db-f1-micro \
     --region=europe-west1 \
-    --authorized-networks=0.0.0.0/0 &> /dev/null
+    --authorized-networks=0.0.0.0/0 > ./Create-Infrastructure-IaC.log 2>&1
+  wait
 
   if [ $? -eq 0 ]; then
     success "Cloud SQL instance created successfully."
@@ -106,8 +131,10 @@ function create_postgres_instance() {
 
 # Functie: Create a new PostgreSQL user.
 function create_postgres_user() {
-  gcloud sql users create admin --instance=db1 --password=123
-  gcloud sql users delete postgres --instance=db1 --quiet
+  loading_icon 10 "* Stap 6/6:" &
+  gcloud sql users create admin --instance=db1 --password=123 > ./Create-Infrastructure-IaC.log 2>&1
+  gcloud sql users delete postgres --instance=db1 --quiet > ./Create-Infrastructure-IaC.log 2>&1
+  wait
 
   if [ $? -eq 0 ]; then
     success "Cloud SQL user created successfully."
@@ -117,35 +144,37 @@ function create_postgres_user() {
 }
 
 function bash_validation() {
-  if [ -z "$BASH_VERSION" ]; then error_exit "This script must be run using Bash."; fi
+  if [ -z "$BASH_VERSION" ]; then
+    error_exit "This script must be run using Bash."
+  fi
+
   [ "$EUID" -ne 0 ] && error_exit "Script must be run as root: sudo $0"
-  if [ ! command -v gcloud &> /dev/null ]; then error_exit "Google Cloud CLI is not installed. Please install it before running this script."; fi
+
+  if ! command -v gcloud &> /dev/null; then
+    error_exit "Google Cloud CLI is not installed. Please install it before running this script."
+  fi
 }
 
+touch ./Create-Infrastructure-IaC.log
 welcome_message
 bash_validation
 
-success "Starting deployment..."
-
-loading_icon 10 "* Stap 1/5:" &
-create_project 
+create_project            # Step 1
 wait
 
-loading_icon 10 "* Stap 2/5:" &
-set_project
+set_project               # Step 2
 wait
 
-loading_icon 10 "* Stap 3/5:" &
-link_billing_account
+link_billing_account      # Step 3
 wait
 
-loading_icon 600 "* Stap 4/5:" &
-create_postgres_instance
+enable_apis               # Step 4
 wait
 
-loading_icon 10 "* Stap 5/5:" &
-create_postgres_user
+create_postgres_instance  # Step 5
 wait
 
+create_postgres_user      # Step 6
+wait
 
 success_exit "Infrastructure created successfully."
