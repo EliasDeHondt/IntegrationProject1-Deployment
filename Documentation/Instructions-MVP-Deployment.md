@@ -161,9 +161,7 @@ This document will guide you through the process of deploying the MVP of the Cod
     PORT=5432
 
     IP_ADDRESS=$(gcloud sql instances describe $INSTANCE_NAME --format="value(ipAddresses[0].ipAddress)")
-
     CONNECTION_STRING="Host=${IP_ADDRESS};Port=${PORT};Database=codeforge;User Id=${USER_NAME};Password=${PASSW>
-
     echo "Connection String: ${CONNECTION_STRING}"
     ```
 

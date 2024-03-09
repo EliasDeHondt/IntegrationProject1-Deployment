@@ -14,18 +14,18 @@ line="*********************************************"
 
 # Functie: Error afhandeling.
 function error_exit() {
-  echo -e "* ${rood}$1${reset}\n*\n* Exiting script."
+  echo -e "\n*\n* ${rood}$1${reset}\n*\n* Exiting script."
   exit 1
 }
 
 # Functie: Succes afhandeling.
 function success_exit() {
-  echo -e "* ${groen}$1${reset}\n*\n${line}"
+  echo -e "*\n* ${groen}$1${reset}\n*\n${line}"
   exit 0
 }
 
 function success() {
-  echo -e "* ${groen}$1${reset}\n*"
+  echo -e "*\n* ${groen}$1${reset}\n*"
 }
 
 # Functie: Print the welcome message.
@@ -59,18 +59,34 @@ function loading_icon() {
 
 # Functie: Create a new project.
 function create_project() {
-  gcloud projects create $Projectid &> /dev/null
+  gcloud projects create '123' &> /dev/null
+  if [ $? -eq 0 ]; then
+    success "Project created successfully."
+  else
+    error_exit "Failed to create the project."
+  fi
 }
 
 # Functie: Set the project.
 function set_project() {
   gcloud config set project $Projectid &> /dev/null
+  if [ $? -eq 0 ]; then
+    success "Project set successfully."
+  else
+    error_exit "Failed to set the project."
+  fi
 }
 
 # Functie: Link the billing account to the project.
 function link_billing_account() {
   billing_account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)" | head -n 1)
   gcloud beta billing projects link $(gcloud config get-value project) --billing-account="$billing_account" &> /dev/null
+
+  if [ $? -eq 0 ]; then
+    success "Billing account linked successfully."
+  else
+    error_exit "Failed to link the billing account."
+  fi
 }
 
 # Functie: Create a new PostgreSQL instance.
@@ -80,12 +96,24 @@ function create_postgres_instance() {
     --tier=db-f1-micro \
     --region=europe-west1 \
     --authorized-networks=0.0.0.0/0 &> /dev/null
+
+  if [ $? -eq 0 ]; then
+    success "Cloud SQL instance created successfully."
+  else
+    error_exit "Failed to create the Cloud SQL instance."
+  fi
 }
 
 # Functie: Create a new PostgreSQL user.
 function create_postgres_user() {
   gcloud sql users create admin --instance=db1 --password=123
   gcloud sql users delete postgres --instance=db1 --quiet
+
+  if [ $? -eq 0 ]; then
+    success "Cloud SQL user created successfully."
+  else
+    error_exit "Failed to create the Cloud SQL user."
+  fi
 }
 
 function bash_validation() {
@@ -99,45 +127,25 @@ bash_validation
 
 success "Starting deployment..."
 
-create_project &
-loading_icon 10 "* "
-if [ $? -eq 0 ]; then
-  success "Project created successfully."
-else
-  error_exit "Failed to create the project."
-fi
+loading_icon 10 "* Stap 1/5:" &
+create_project 
+wait
 
-set_project &
-loading_icon 10 "* "
-if [ $? -eq 0 ]; then
-  success "Project set successfully."
-else
-  error_exit "Failed to set the project."
-fi
+loading_icon 10 "* Stap 2/5:" &
+set_project
+wait
 
-link_billing_account &
-loading_icon 10 "* "
-if [ $? -eq 0 ]; then
-  success "Billing account linked successfully."
-else
-  error_exit "Failed to link the billing account."
-fi
+loading_icon 10 "* Stap 3/5:" &
+link_billing_account
+wait
 
-create_postgres_instance &
-loading_icon 300 "* "
-if [ $? -eq 0 ]; then
-  success "Cloud SQL instance created successfully."
-else
-  error_exit "Failed to create the Cloud SQL instance."
-fi
+loading_icon 600 "* Stap 4/5:" &
+create_postgres_instance
+wait
 
-create_postgres_user &
-loading_icon 10 "* "
-if [ $? -eq 0 ]; then
-  success "Cloud SQL user created successfully."
-else
-  error_exit "Failed to create the Cloud SQL user."
-fi
+loading_icon 10 "* Stap 5/5:" &
+create_postgres_user
+wait
 
 
-#success_exit "Infrastructure created successfully."
+success_exit "Infrastructure created successfully."
