@@ -40,12 +40,12 @@ This document will guide you through the process of deploying the MVP of the Cod
 
 - Create a new project in the Google Cloud Console
     ```bash	
-    gcloud projects create $PROJECTID
+    gcloud projects create $PROJECT_ID
     ```
 
 - Set the project
     ```bash
-    gcloud config set project $PROJECTID
+    gcloud config set project $PROJECT_ID
     ```
 
 - Set the billing account
@@ -68,13 +68,18 @@ This document will guide you through the process of deploying the MVP of the Cod
 
 - Create a PostgreSQL database in the Google Cloud Console (`This can take a few minutes`)
     ```bash	
-    gcloud sql instances create db1 --database-version=POSTGRES_15 --tier=db-f1-micro --region=europe-west1 --authorized-networks=0.0.0.0/0
+    gcloud sql instances create $INSTANCE_NAME --database-version=POSTGRES_15 --tier=db-f1-micro --region=europe-west1 --authorized-networks=0.0.0.0/0
     ```
 
 - Create a database user and delete the default user
     ```bash
-    gcloud sql users create admin --instance=db1 --password=123
-    gcloud sql users delete postgres --instance=db1 --quiet
+    gcloud sql users create $USERNAME --instance=$INSTANCE_NAME --password=$PASSWORD
+    gcloud sql users delete postgres --instance=$INSTANCE_NAME --quiet
+    ```
+
+- Create a database
+    ```bash
+    gcloud sql databases create $DATABASE_NAME --instance=$INSTANCE_NAME
     ```
 
 ### 👉Step 3: Clone The GitHub Repository
@@ -113,21 +118,15 @@ This document will guide you through the process of deploying the MVP of the Cod
     gcloud app browse
     ```
 
+### 👉Step 6: Configure Custom Domain
 
+- Go to the Google Cloud Console [Google Cloud Console](https://console.cloud.google.com/)
+- Navigate to the App Engine section
+- Click on the "Settings" tab
+- Click on the "Custom Domains" tab
+- Click on the "Add a custom domain" button
+- Follow the instructions to add your custom domain
 
-
-
-
-
-
-    
-
-### 👉Step x: Create Bucket (Google Cloud Storage)
-
-- Create a bucket in the Google Cloud Console
-    ```bash	
-    gsutil mb -l europe-west1 gs://mybucket
-    ```
 
 
 
@@ -138,12 +137,12 @@ This document will guide you through the process of deploying the MVP of the Cod
 
 - Delete a PostgreSQL database in the Google Cloud Console
     ```bash	
-    gcloud sql databases delete codeforge --instance=db1 --quiet
+    gcloud sql databases delete $DATABASE_NAME --instance=$INSTANCE_NAME --quiet
     ```
 
 - Delete de google cloud project
     ```bash	
-    gcloud projects delete PROJECT_ID --quiet
+    gcloud projects delete $PROJECT_ID --quiet
     ```
 
 - Get Connection String
