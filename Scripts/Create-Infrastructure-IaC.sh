@@ -143,6 +143,7 @@ function create_postgres_user() {
   fi
 }
 
+# Functie: Create a new PostgreSQL database.
 function create_postgres_database() {
   loading_icon 10 "* Stap 7/7:" &
   gcloud sql databases create codeforge --instance=db1 > ./Create-Infrastructure-IaC.log 2>&1
