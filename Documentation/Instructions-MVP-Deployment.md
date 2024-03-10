@@ -12,6 +12,9 @@
     4. [👉Step 3: Clone The GitHub Repository](#👉step-3-clone-the-github-repository)
     5. [👉Step 4: Restore & Build The Project](#👉step-4-restore--build-the-project)
     6. [👉Step 5: Deploy The Application](#👉step-5-deploy-the-application)
+    7. [👉Step 6: Configure Custom Domain](#👉step-6-configure-custom-domain)
+4. [📦Extra](#📦extra)
+5. [🔗Links](#🔗links)
 
 ---
 
