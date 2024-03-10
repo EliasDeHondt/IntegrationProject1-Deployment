@@ -113,25 +113,27 @@ This document will guide you through the process of deploying the MVP of the Cod
     gcloud app deploy --quiet
     ```
 
+### 👉Step 6: Configure Custom Domain
+
+- Verify your domain (`This can take a day for the DNS to propagate it depends on the domain provider and the TTL`)
+    ```bash
+    gcloud domains verify $DOMAIN_NAME
+    ```
+
+- Add your custom domain
+    ```bash
+    gcloud domains create-mapping $DOMAIN_NAME --project=$PROJECT_ID
+    ```
+
+- Configure SSL
+    ```bash
+    gcloud beta app domain-mappings update $DOMAIN_NAME --certificate-management=managed --project=$PROJECT_ID
+    ```
+
 - You can find your URL at the end of the output of the previous command.
     ```bash
     gcloud app browse
     ```
-
-### 👉Step 6: Configure Custom Domain
-
-- Go to the Google Cloud Console [Google Cloud Console](https://console.cloud.google.com/)
-- Navigate to the App Engine section
-- Click on the "Settings" tab
-- Click on the "Custom Domains" tab
-- Click on the "Add a custom domain" button
-- Follow the instructions to add your custom domain
-
-
-
-
-
-
 
 ## 📦Extra
 
