@@ -155,6 +155,7 @@ function create_postgres_database() {
   fi
 }
 
+# Functie: Bash validatie.
 function bash_validation() {
   if [ -z "$BASH_VERSION" ]; then
     error_exit "This script must be run using Bash."
@@ -169,7 +170,7 @@ function bash_validation() {
 
 touch ./Create-Infrastructure-IaC.log
 welcome_message
-bash_validation
+bash_validation           # Step 0
 
 create_project            # Step 1
 wait
