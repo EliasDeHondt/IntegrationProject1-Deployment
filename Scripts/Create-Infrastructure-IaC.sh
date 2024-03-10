@@ -60,7 +60,7 @@ function loading_icon() {
 
 # Functie: Create a new project.
 function create_project() {
-  loading_icon 10 "* Stap 1/6:" &
+  loading_icon 10 "* Stap 1/7:" &
   gcloud projects create $Projectid > ./Create-Infrastructure-IaC.log 2>&1
   wait
 
@@ -73,7 +73,7 @@ function create_project() {
 
 # Functie: Set the project.
 function set_project() {
-  loading_icon 10 "* Stap 2/6:" &
+  loading_icon 10 "* Stap 2/7:" &
   gcloud config set project $Projectid > ./Create-Infrastructure-IaC.log 2>&1
   wait
 
@@ -86,7 +86,7 @@ function set_project() {
 
 # Functie: Link the billing account to the project.
 function link_billing_account() {
-  loading_icon 10 "* Stap 3/6:" &
+  loading_icon 10 "* Stap 3/7:" &
   billing_account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)" | head -n 1)
   gcloud beta billing projects link $(gcloud config get-value project) --billing-account="$billing_account" > ./Create-Infrastructure-IaC.log 2>&1
   wait
@@ -100,7 +100,7 @@ function link_billing_account() {
 
 # Functie: Enable the required APIs.
 function enable_apis() {
-  loading_icon 10 "* Stap 4/6:" &
+  loading_icon 10 "* Stap 4/7:" &
   gcloud services enable sqladmin.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
   wait
 
@@ -114,7 +114,7 @@ function enable_apis() {
 
 # Functie: Create a new PostgreSQL instance.
 function create_postgres_instance() {
-  loading_icon 600 "* Stap 5/6:" &
+  loading_icon 600 "* Stap 5/7:" &
   gcloud sql instances create db1 \
     --database-version=POSTGRES_15 \
     --tier=db-f1-micro \
@@ -131,7 +131,7 @@ function create_postgres_instance() {
 
 # Functie: Create a new PostgreSQL user.
 function create_postgres_user() {
-  loading_icon 10 "* Stap 6/6:" &
+  loading_icon 10 "* Stap 6/7:" &
   gcloud sql users create admin --instance=db1 --password=123 > ./Create-Infrastructure-IaC.log 2>&1
   gcloud sql users delete postgres --instance=db1 --quiet > ./Create-Infrastructure-IaC.log 2>&1
   wait
@@ -140,6 +140,18 @@ function create_postgres_user() {
     success "Cloud SQL user created successfully."
   else
     error_exit "Failed to create the Cloud SQL user."
+  fi
+}
+
+function create_postgres_database() {
+  loading_icon 10 "* Stap 7/7:" &
+  gcloud sql databases create codeforge --instance=db1 > ./Create-Infrastructure-IaC.log 2>&1
+  wait
+
+  if [ $? -eq 0 ]; then
+    success "Cloud SQL database created successfully."
+  else
+    error_exit "Failed to create the Cloud SQL database."
   fi
 }
 
@@ -175,6 +187,9 @@ create_postgres_instance  # Step 5
 wait
 
 create_postgres_user      # Step 6
+wait
+
+create_postgres_database  # Step 7
 wait
 
 success_exit "Infrastructure created successfully."
