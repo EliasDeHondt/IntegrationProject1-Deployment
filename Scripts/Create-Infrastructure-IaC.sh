@@ -109,7 +109,6 @@ function enable_apis() {
   else
     error_exit "Failed to enable the APIs."
   fi
-
 }
 
 # Functie: Create a new PostgreSQL instance.
