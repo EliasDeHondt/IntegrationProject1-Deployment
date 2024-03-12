@@ -42,12 +42,10 @@ sudo apt-get install apt-transport-https ca-certificates gnupg curl sudo
     ```bash
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
     ```
-
 - For older distributions, run the following command:
     ```bash
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
     ```
-
 - If your distribution's apt-key command doesn't support the --keyring argument, run the following command:
     ```bash	
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
@@ -59,7 +57,6 @@ sudo apt-get install apt-transport-https ca-certificates gnupg curl sudo
     ```bash
     echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
     ```
-
 - For older distributions that don't support the signed-by option, run the following command:
     ```bash
     echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
@@ -78,7 +75,6 @@ sudo apt-get update && sudo apt-get install google-cloud-cli
         ```bash
         RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg && apt-get update -y && apt-get install google-cloud-sdk -y 
         ```
-
     - For older base images that do not support the gpg --dearmor command:
         ```bash
         RUN echo "deb http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && apt-get update -y && apt-get install google-cloud-sdk -y
@@ -145,22 +141,18 @@ gcloud init
     ```bash
     gcloud auth login
     ```
-
 - To verify the installation, run the following command:
     ```bash
     gcloud --version
     ```
-
 - To update the gcloud CLI, run the following command:
     ```bash
     sudo apt-get update && sudo apt-get install google-cloud-sdk
     ```
-
 - To uninstall the gcloud CLI, run the following command:
     ```bash
     sudo apt-get remove google-cloud-sdk
     ```
-
 - If you want to remove all configuration files, run the following command:
     ```bash
     sudo apt-get remove --purge google-cloud-sdk

@@ -34,7 +34,7 @@ Please also see following documents:
         - [x] [Project Context](/Documentation/Deployment-Analyze-and-Architecture.md#📑context)
 - [ ] Infra deploy automation: `Bash scripts`
     - [ ] [Create Infrastructure Script (IaC)](/Scripts/Create-Infrastructure-IaC.sh)
-    - [ ] [Delete Infrastructure Script (IaC)](/Scripts/Delete-Infrastructure-IaC.sh)
+    - [x] [Delete Infrastructure Script (IaC)](/Scripts/Delete-Infrastructure-IaC.sh)
 - [ ] Instructions for deployment
     - [x] [Instructions GCloud](/Documentation/Instructions-GCloud.md)
     - [x] [Instructions MVP Deployment](/Documentation/Instructions-MVP-Deployment.md)

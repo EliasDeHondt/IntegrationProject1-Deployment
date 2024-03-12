@@ -24,6 +24,7 @@ function success_exit() {
   exit 0
 }
 
+# Functie: Succes afhandeling.
 function success() {
   echo -e "\n*\n* ${groen}$1${reset}\n*"
 }

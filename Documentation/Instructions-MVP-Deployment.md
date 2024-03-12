@@ -30,13 +30,11 @@ This document will guide you through the process of deploying the MVP of the Cod
     ```bash	
     sudo apt-get update && sudo apt-get upgrade -y
     ```
-
 - Install the .NET SDK 7.0 or later.
     ```bash	
     sudo apt-get install dotnet-sdk-7.0
     dotnet --version # Check if the installation was successful
     ```
-
 - Insall the Google Cloud CLI [Instructions GCloud CLI](https://github.com/EliasDeHondt/IntegrationProject1-Deployment/blob/main/Documentation/Instructions-GCloud-CLI.md)
 
 ### 👉Step 1: Create Environment / Project
@@ -45,23 +43,19 @@ This document will guide you through the process of deploying the MVP of the Cod
     ```bash	
     gcloud projects create $PROJECT_ID
     ```
-
 - Set the project
     ```bash
     gcloud config set project $PROJECT_ID
     ```
-
 - Set the billing account
     ```bash
     gcloud beta billing projects link $(gcloud config get-value project) --billing-account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)")
     ```
-
 - Enable the required services
     ```bash	
     gcloud services enable sqladmin.googleapis.com
     gcloud services enable appengineflex.googleapis.com
     ```
-
 - Make sure to create your application first.
     ```bash	
     gcloud app create --region=europe-west1 --project=$(gcloud config get-value project)
@@ -73,13 +67,11 @@ This document will guide you through the process of deploying the MVP of the Cod
     ```bash	
     gcloud sql instances create $INSTANCE_NAME --database-version=POSTGRES_15 --tier=db-f1-micro --region=europe-west1 --authorized-networks=0.0.0.0/0
     ```
-
 - Create a database user and delete the default user
     ```bash
     gcloud sql users create $USERNAME --instance=$INSTANCE_NAME --password=$PASSWORD
     gcloud sql users delete postgres --instance=$INSTANCE_NAME --quiet
     ```
-
 - Create a database
     ```bash
     gcloud sql databases create $DATABASE_NAME --instance=$INSTANCE_NAME
@@ -91,7 +83,6 @@ This document will guide you through the process of deploying the MVP of the Cod
     ```bash
     git clone https://github.com/EliasDeHondt/IntegrationProject1-Development.git
     ```
-
 - Navigate to the project folder
     ```bash
     cd IntegrationProject1-Development
@@ -103,7 +94,6 @@ This document will guide you through the process of deploying the MVP of the Cod
     ```bash
     dotnet restore
     ```
-
 - Build the project
     ```bash
     dotnet build
@@ -122,17 +112,14 @@ This document will guide you through the process of deploying the MVP of the Cod
     ```bash
     gcloud domains verify $DOMAIN_NAME
     ```
-
 - Add your custom domain
     ```bash
     gcloud domains create-mapping $DOMAIN_NAME --project=$PROJECT_ID
     ```
-
 - Configure SSL
     ```bash
     gcloud beta app domain-mappings update $DOMAIN_NAME --certificate-management=managed --project=$PROJECT_ID
     ```
-
 - You can find your URL at the end of the output of the previous command.
     ```bash
     gcloud app browse
@@ -144,12 +131,10 @@ This document will guide you through the process of deploying the MVP of the Cod
     ```bash	
     gcloud sql databases delete $DATABASE_NAME --instance=$INSTANCE_NAME --quiet
     ```
-
 - Delete de google cloud project
     ```bash	
     gcloud projects delete $PROJECT_ID --quiet
     ```
-
 - Get Connection String
     ```bash
     #!/bin/bash
