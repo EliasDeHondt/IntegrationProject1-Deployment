@@ -31,9 +31,18 @@ This document will guide you through the process of deploying the MVP of the Cod
     sudo apt-get update && sudo apt-get upgrade -y
     ```
 - Install the .NET SDK 7.0 or later.
-    ```bash	
+    ```bash
     sudo apt-get install dotnet-sdk-7.0
     dotnet --version # Check if the installation was successful
+    ```
+- Insall nodejs and npm
+    ```bash	
+    sudo apt-get install wget
+    wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
+    source ~/.profile
+    nvm install 20.11.1
+    node --version
+    npm --version
     ```
 - Insall the Google Cloud CLI [Instructions GCloud CLI](https://github.com/EliasDeHondt/IntegrationProject1-Deployment/blob/main/Documentation/Instructions-GCloud-CLI.md)
 
@@ -85,7 +94,10 @@ This document will guide you through the process of deploying the MVP of the Cod
     ```
 - Navigate to the project folder
     ```bash
-    cd IntegrationProject1-Development
+    cd IntegrationProject1-Development/MVC/ClientApp
+    npm rebuild # In Code
+    npm run build
+    cd ../../
     ```
 
 ### 👉Step 4: Restore & Build The Project
