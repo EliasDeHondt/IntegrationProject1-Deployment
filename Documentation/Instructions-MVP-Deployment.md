@@ -10,9 +10,10 @@
     2. [👉Step 1: Create Environment / Project](#👉step-1-create-environment--project)
     3. [👉Step 2: Create PostgreSQL Database (Google Cloud SQL)](#👉step-2-create-postgresql-database-google-cloud-sql)
     4. [👉Step 3: Clone The GitHub Repository](#👉step-3-clone-the-github-repository)
-    5. [👉Step 4: Restore & Build The Project](#👉step-4-restore--build-the-project)
-    6. [👉Step 5: Deploy The Application](#👉step-5-deploy-the-application)
-    7. [👉Step 6: Configure Custom Domain](#👉step-6-configure-custom-domain)
+    5. [👉Step 4: rebuild & build npm](#👉step-4-rebuild--build-npm)
+    6. [👉Step 5: Restore & Build The Project](#👉step-5-restore--build-the-project)
+    7. [👉Step 6: Deploy The Application](#👉step-6-deploy-the-application)
+    8. [👉Step 7: Configure Custom Domain](#👉step-7-configure-custom-domain)
 4. [📦Extra](#📦extra)
 5. [🔗Links](#🔗links)
 
@@ -87,20 +88,22 @@ This document will guide you through the process of deploying the MVP of the Cod
     ```
 
 ### 👉Step 3: Clone The GitHub Repository
-
 - Clone the repository
     ```bash
     git clone https://github.com/EliasDeHondt/IntegrationProject1-Development.git
     ```
+
+### 👉Step 4: rebuild & build npm
+
 - Navigate to the project folder
     ```bash
     cd IntegrationProject1-Development/MVC/ClientApp
-    npm rebuild # In Code
+    npm rebuild # Code
     npm run build
     cd ../../
     ```
 
-### 👉Step 4: Restore & Build The Project
+### 👉Step 5: Restore & Build The Project
 
 - Restore the project
     ```bash
@@ -111,14 +114,14 @@ This document will guide you through the process of deploying the MVP of the Cod
     dotnet build
     ```
 
-### 👉Step 5: Deploy The Application
+### 👉Step 6: Deploy The Application
 
 - Deploy the application (`This can take a few minutes`)
     ```bash
     gcloud app deploy --quiet
     ```
 
-### 👉Step 6: Configure Custom Domain
+### 👉Step 7: Configure Custom Domain
 
 - Verify your domain (`This can take a day for the DNS to propagate it depends on the domain provider and the TTL`)
     ```bash
