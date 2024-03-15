@@ -63,7 +63,7 @@ function loading_icon() {
 
 # Functie: Create a new project.
 function create_project() { # Step 1
-  loading_icon 10 "* Stap 1/10:" &
+  loading_icon 10 "* Stap 1/9:" &
   gcloud projects create $Projectid > ./Create-Infrastructure-IaC.log 2>&1
   wait
 
@@ -76,7 +76,7 @@ function create_project() { # Step 1
 
 # Functie: Set the project.
 function set_project() { # Step 2
-  loading_icon 10 "* Stap 2/10:" &
+  loading_icon 10 "* Stap 2/9:" &
   gcloud config set project $Projectid > ./Create-Infrastructure-IaC.log 2>&1
   wait
 
@@ -89,7 +89,7 @@ function set_project() { # Step 2
 
 # Functie: Link the billing account to the project.
 function link_billing_account() { # Step 3
-  loading_icon 10 "* Stap 3/10:" &
+  loading_icon 10 "* Stap 3/9:" &
   billing_account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)" | head -n 1)
   gcloud beta billing projects link $(gcloud config get-value project) --billing-account="$billing_account" > ./Create-Infrastructure-IaC.log 2>&1
   wait
@@ -103,7 +103,7 @@ function link_billing_account() { # Step 3
 
 # Functie: Enable the required APIs.
 function enable_apis() { # Step 4
-  loading_icon 10 "* Stap 4/10:" &
+  loading_icon 10 "* Stap 4/9:" &
   gcloud services enable sqladmin.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
   gcloud services enable cloudresourcemanager.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
   wait
@@ -117,7 +117,7 @@ function enable_apis() { # Step 4
 
 # Functie: Create a new PostgreSQL instance.
 function create_postgres_instance() { # Step 5
-  loading_icon 600 "* Stap 5/10:" &
+  loading_icon 600 "* Stap 5/9:" &
   gcloud sql instances create db1 \
     --database-version=POSTGRES_15 \
     --tier=db-f1-micro \
@@ -134,7 +134,7 @@ function create_postgres_instance() { # Step 5
 
 # Functie: Create a new PostgreSQL user.
 function create_postgres_user() { # Step 6
-  loading_icon 10 "* Stap 6/10:" &
+  loading_icon 10 "* Stap 6/9:" &
   gcloud sql users create admin --instance=db1 --password=123 > ./Create-Infrastructure-IaC.log 2>&1
   gcloud sql users delete postgres --instance=db1 --quiet > ./Create-Infrastructure-IaC.log 2>&1
   wait
@@ -148,7 +148,7 @@ function create_postgres_user() { # Step 6
 
 # Functie: Create a new PostgreSQL database.
 function create_postgres_database() { # Step 7
-  loading_icon 10 "* Stap 7/10:" &
+  loading_icon 10 "* Stap 7/9:" &
   gcloud sql databases create codeforge --instance=db1 > ./Create-Infrastructure-IaC.log 2>&1
   wait
 
@@ -161,7 +161,7 @@ function create_postgres_database() { # Step 7
 
 # Functie: Create a new GCloud Storage bucket.
 function create_storage_bucket() {
-  loading_icon 10 "* Stap 8/10:" &
+  loading_icon 10 "* Stap 8/9:" &
   gcloud storage buckets create gs://codeforge-bucket-videos --location=europe-west1 > ./Create-Infrastructure-IaC.log 2>&1
   wait
 
@@ -177,7 +177,7 @@ function create_service_account() {
   local user_email="${name}@${Projectid}.iam.gserviceaccount.com"
   local json_key_file="./service-account-key.json"
   
-  loading_icon 10 "* Stap 9/10:" &
+  loading_icon 10 "* Stap 9/9:" &
   gcloud iam service-accounts create $name \
     --display-name="CodeForge Service Account" \
     --description="Service account for CodeForge" > ./Create-Infrastructure-IaC.log 2>&1
@@ -189,26 +189,6 @@ function create_service_account() {
     success "Service account created successfully."
   else
     error_exit "Failed to create the service account."
-  fi
-}
-
-# Functie: Set the GCloud Storage bucket permissions.
-function set_storage_bucket_permissions() {
-  local user_email="${name}@${Projectid}.iam.gserviceaccount.com"
-  local json_key_file="./service-account-key.json"
-  local role="roles/owner"
-
-  gcloud auth activate-service-account --key-file="$json_key_file"
-  
-  loading_icon 10 "* Stap 10/10:" &
-  gcloud projects add-iam-policy-binding $Projectid --member="serviceAccount:$user_email" --role="$role" > ./Create-Infrastructure-IaC.log 2>&1
-  wait
-  # gcloud projects add-iam-policy-binding "codeforge-projectid" --member="serviceAccount:codeforge-service-account@test123456789demo.iam.gserviceaccount.com" --role="roles/owner"
-
-  if [ $? -eq 0 ]; then
-    success "Cloud Storage bucket permissions set successfully for user: $user_email"
-  else
-    error_exit "Failed to set the Cloud Storage bucket permissions for user: $user_email"
   fi
 }
 
@@ -254,9 +234,6 @@ create_storage_bucket     # Step 8
 wait
 
 create_service_account    # Step 9
-wait
-
-set_storage_bucket_permissions # Step 10
 wait
 
 success_exit "Infrastructure created successfully."
