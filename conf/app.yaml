@@ -1,0 +1,22 @@
+############################
+# @author Elias De Hondt   #
+# @see https://eliasdh.com #
+# @since 01/03/2024        #
+############################
+
+# App Engine configuration
+env: flex
+runtime: custom
+service: default
+manual_scaling:
+  instances: 1
+
+# Secret configuration
+env_variables:
+  ASPNETCORE_ENVIRONMENT: 'Production'
+  ASPNETCORE_POSTGRES_HOST: '35.195.85.228'
+  ASPNETCORE_POSTGRES_PORT: '5432'
+  ASPNETCORE_POSTGRES_DATABASE: 'codeforge'
+  ASPNETCORE_POSTGRES_USER: 'admin'
+  ASPNETCORE_POSTGRES_PASSWORD: '123'
+  GOOGLE_APPLICATION_CREDENTIALS: 'service-account-key.json'
