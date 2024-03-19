@@ -129,11 +129,11 @@ This document will guide you through the process of deploying the MVP of the Cod
     ```
 - Add your custom domain
     ```bash
-    gcloud domains create-mapping $DOMAIN_NAME --project=$PROJECT_ID
+    gcloud domains create-mapping $DOMAIN_NAME --project=$(gcloud config get-value project)
     ```
 - Configure SSL
     ```bash
-    gcloud beta app domain-mappings update $DOMAIN_NAME --certificate-management=managed --project=$PROJECT_ID
+    gcloud beta app domain-mappings update $DOMAIN_NAME --certificate-management=managed --project=$(gcloud config get-value project)
     ```
 - You can find your URL at the end of the output of the previous command.
     ```bash
@@ -148,7 +148,7 @@ This document will guide you through the process of deploying the MVP of the Cod
     ```
 - Delete de google cloud project
     ```bash	
-    gcloud projects delete $PROJECT_ID --quiet
+    gcloud projects delete $(gcloud config get-value project) --quiet
     ```
 - Get Connection String
     ```bash
