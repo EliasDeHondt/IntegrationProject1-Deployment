@@ -168,7 +168,7 @@ function create_postgres_database() { # Step 7
 # Functie: Create a new GCloud Storage bucket.
 function create_storage_bucket() { # Step 8
   loading_icon 10 "* Stap 8/10:" &
-  gcloud storage buckets create gs://codeforge-bucket-videos \
+  gcloud storage buckets create gs://codeforge-video-bucket \
     --location=europe-west1 > ./Create-Infrastructure-IaC.log 2>&1
   wait
 
