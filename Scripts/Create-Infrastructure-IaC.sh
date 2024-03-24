@@ -180,7 +180,7 @@ function create_storage_bucket() { # Step 8
 }
 
 # Functie: Create a new service account and add permissions
-function create_service_account() {
+function create_service_account() { # Step 9
   loading_icon 10 "* Stap 9/10:" &
   gcloud iam service-accounts create $name_service_account \
     --display-name="CodeForge Service Account" \
@@ -195,7 +195,7 @@ function create_service_account() {
 }
 
 # Functie: Add permissions to the service account.
-function add_permissions_to_service_account() {
+function add_permissions_to_service_account() { # Step 10
   local user_email="${name_service_account}@${projectid}.iam.gserviceaccount.com"
   local role="roles/storage.admin"
   local json_key_file="./service-account-key.json"
