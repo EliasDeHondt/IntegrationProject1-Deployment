@@ -177,6 +177,5 @@ While a fully finished casing is not part of the task, the setup should be robus
 Emphasis is placed on user-friendliness, engaging design, and performance meeting industry standards. The tool will undergo user tests to refine the design based on participant interactions. Performance, security, and testing standards must align with best practices.
 
 ## 🔗Links
-
 - 👯 Web hosting company [EliasDH.com](https://eliasdh.com).
-- 📫 How to reach us eliasdehondt@outlook.com.
+- 📫 How to reach us elias.dehondt@outlook.com

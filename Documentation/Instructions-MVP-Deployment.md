@@ -164,4 +164,4 @@ This document will guide you through the process of deploying the MVP of the Cod
 
 ## 🔗Links
 - 👯 Web hosting company [EliasDH.com](https://eliasdh.com).
-- 📫 How to reach us eliasdehondt@outlook.com.
+- 📫 How to reach us elias.dehondt@outlook.com
