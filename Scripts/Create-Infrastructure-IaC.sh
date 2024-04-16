@@ -71,7 +71,7 @@ function loading_icon() {
 
 # Functie: Create a new project if it doesn't already exist.
 function create_project() { # Step 1
-  local EXISTING_PROJECTS=$(gcloud projects list | grep -o "^$projectid")
+  local EXISTING_PROJECTS=$(gcloud projects list 2>/dev/null | grep -o "^$projectid")
 
   if [ -z "$EXISTING_PROJECTS" ]; then
     loading_icon 10 "* Stap 1/$global_staps:" &
@@ -133,7 +133,7 @@ function link_billing_account() { # Step 3
 
 # Functie: Enable the required APIs.
 function enable_apis() { # Step 4
-  loading_icon 5 "* Stap 4/$global_staps:" &
+  loading_icon 20 "* Stap 4/$global_staps:" &
   gcloud services enable sqladmin.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
   gcloud services enable cloudresourcemanager.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
   gcloud services enable compute.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
@@ -151,10 +151,10 @@ function create_postgres_instance() { # Step 5
   local INSTANCE_NAME=db1
   local DATABASE_VERSION=POSTGRES_15
   local MACHINE_TYPE=db-f1-micro
-  local EXISTING_INSTANCE=$(gcloud sql instances list | grep -o "^$INSTANCE_NAME" > ./Create-Infrastructure-IaC.log 2>&1)
+  local EXISTING_INSTANCE=$(gcloud sql instances list --filter="name=$INSTANCE_NAME" --format="value(NAME)" 2>/dev/null)
 
   if [ -z "$EXISTING_INSTANCE" ]; then
-    loading_icon 600 "* Stap 5/$global_staps:" &
+    loading_icon 400 "* Stap 5/$global_staps:" &
     gcloud sql instances create $INSTANCE_NAME \
       --database-version=$DATABASE_VERSION \
       --tier=$MACHINE_TYPE \
@@ -270,7 +270,7 @@ function create_service_account() { # Step 9
 function add_permissions_to_service_account() { # Step 10
   local USER_EMAIL="${name_service_account}@${projectid}.iam.gserviceaccount.com"
   local ROLE="roles/storage.admin"
-  local EXISTING_BINDINGS=$(gcloud projects get-iam-policy $projectid --flatten="bindings[].members" --format="value(bindings.members)" | grep -o "serviceAccount:${user_email}")
+  local EXISTING_BINDINGS=$(gcloud projects get-iam-policy $projectid --flatten="bindings[].members" --format="value(bindings.members)" | grep -o "serviceAccount:${USER_EMAIL}")
 
   if [ -z "$EXISTING_BINDINGS" ]; then
     loading_icon 10 "* Step 10/$global_staps:" &
@@ -301,17 +301,17 @@ function create_vm_instance() { # Step 11
   local IMAGE_PROJECT=ubuntu-os-cloud
   local IMAGE_FAMILY=ubuntu-2004-lts
   local ZONE=europe-west1-c
-  local STARTUP_SCRIPT='
-  sudo apt-get update -y && sudo apt-get upgrade -y
-  '
+  # local STARTUP_SCRIPT='
+  # sudo apt-get update -y && sudo apt-get upgrade -y
+  # '
 
   loading_icon 10 "* Stap 11/$global_staps:" &
   gcloud compute instances create $INSTANCE_NAME \
     --machine-type=$MACHINE_TYPE \
     --image-project=$IMAGE_PROJECT \
     --image-family=$IMAGE_FAMILY \
-    --zone=$ZONE \
-    --metadata=startup-script=\"$STARTUP_SCRIPT\"
+    --zone=$ZONE # \
+  #   --metadata=startup-script=\"$STARTUP_SCRIPT\"
   wait
 
   if [ $? -eq 0 ]; then
@@ -334,7 +334,7 @@ function bash_validation() {
   fi
 }
 
-touch ./Create-Infrastructure-IaC.logs
+touch ./Create-Infrastructure-IaC.log
 welcome_message
 bash_validation           # Step 0
 
