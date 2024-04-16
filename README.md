@@ -39,11 +39,8 @@ Please also see following documents:
     - [x] [Instructions GCloud](/Documentation/Instructions-GCloud.md)
     - [x] [Instructions MVP Deployment](/Documentation/Instructions-MVP-Deployment.md)
     - [ ] [Instructions for Deployment](/Documentation/Instructions-IaC-Deployment.md)
-- [ ] Instructions for configuration
-    - [ ] [Instructions for Configuration](/Documentation/Instructions-Configuration.md)
 - [ ] Instructions for restoring a backup
     - [x] [GitLab to GitHub Backup](/Scripts/GitLab-to-GitHub-Backup.ps1)
-    - [ ] [Instructions for Restoring a Backup](/Documentation/Instructions-Restore-Backup.md)
 
 ### 📚References
 - [DotNet Hello World](https://github.com/EliasDeHondt/DotNet-HelloWorld)
