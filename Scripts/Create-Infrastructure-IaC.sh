@@ -224,11 +224,10 @@ function create_vm_instance() { # Step 11
   local IMAGE_PROJECT=ubuntu-os-cloud
   local IMAGE_FAMILY=ubuntu-2004-lts
   local ZONE=europe-west1-c
-  local STARTUP_SCRIPT="
+  local STARTUP_SCRIPT='
   #!/bin/bash
   sudo apt-get update -y && sudo apt-get upgrade -y
-  "
-
+  '
 
   gcloud compute instances create $INSTANCE_NAME \
     --machine-type=$MACHINE_TYPE \
@@ -236,7 +235,6 @@ function create_vm_instance() { # Step 11
     --image-family=$IMAGE_FAMILY \
     --zone=$ZONE \
     --metadata=startup-script=\"$STARTUP_SCRIPT\"
-
 }
 
 # Functie: Bash validatie.
@@ -284,6 +282,9 @@ create_service_account    # Step 9
 wait
 
 add_permissions_to_service_account # Step 10
+wait
+
+create_vm_instance        # Step 11
 wait
 
 success_exit "Infrastructure created successfully."
