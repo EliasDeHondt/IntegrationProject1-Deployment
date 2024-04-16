@@ -8,12 +8,15 @@
 reset='\e[0m'
 rood='\e[0;31m'
 blauw='\e[0;34m'
+yellow='\e[0;33m'
 groen='\e[0;32m'
 projectid="codeforge-$(date +%Y%m%d%H%M%S)"
 #projectid="codeforge-projectid"
 name_service_account="codeforge-service-account"
 line="*********************************************"
 global_staps=11
+region=europe-west1
+
 
 # Functie: Error afhandeling.
 function error_exit() {
@@ -30,6 +33,10 @@ function success_exit() {
 # Functie: Succes afhandeling.
 function success() {
   echo -e "\n*\n* ${groen}$1${reset}\n*"
+}
+
+function skip() {
+  echo -e "\n*\n* ${yellow}$1${reset}\n*"
 }
 
 # Functie: Print the welcome message.
@@ -62,51 +69,71 @@ function loading_icon() {
     exit 1
 }
 
-# Functie: Create a new project.
+# Functie: Create a new project if it doesn't already exist.
 function create_project() { # Step 1
-  loading_icon 10 "* Stap 1/$global_staps:" &
-  gcloud projects create $projectid > ./Create-Infrastructure-IaC.log 2>&1
-  wait
+  local EXISTING_PROJECTS=$(gcloud projects list | grep -o "^$projectid")
 
-  if [ $? -eq 0 ]; then
-    success "Project created successfully."
+  if [ -z "$EXISTING_PROJECTS" ]; then
+    loading_icon 10 "* Stap 1/$global_staps:" &
+    gcloud projects create $projectid > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Project created successfully."
+    else
+      error_exit "Failed to create the project."
+    fi
   else
-    error_exit "Failed to create the project."
+    echo -n "* Stap 1/$global_staps:"
+    skip "Project already exists. Skipping creation."
   fi
 }
 
-# Functie: Set the project.
+# Functie: Set the project if it's not already set.
 function set_project() { # Step 2
-  loading_icon 10 "* Stap 2/$global_staps:" &
-  gcloud config set project $projectid > ./Create-Infrastructure-IaC.log 2>&1
-  wait
+  local CURRENT_PROJECT=$(gcloud config get-value project)
 
-  if [ $? -eq 0 ]; then
-    success "Project set successfully."
+  if [ "$CURRENT_PROJECT" != "$projectid" ]; then
+    loading_icon 5 "* Step 2/$global_staps:" &
+    gcloud config set project $projectid > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Project set successfully."
+    else
+      error_exit "Failed to set the project."
+    fi
   else
-    error_exit "Failed to set the project."
+    echo -n "* Step 2/$global_staps:"
+    skip "Project is already set to $projectid. Skipping setting."
   fi
 }
 
-# Functie: Link the billing account to the project.
+# Functie: Link the billing account to the project if it's not already linked.
 function link_billing_account() { # Step 3
-  loading_icon 10 "* Stap 3/$global_staps:" &
-  billing_account=$(gcloud beta billing accounts list \
-    --format="value(ACCOUNT_ID)" | head -n 1)
-  gcloud beta billing projects link $(gcloud config get-value project) \
-    --billing-account="$billing_account" > ./Create-Infrastructure-IaC.log 2>&1
-  wait
+  local CURRENT_BILLING_ACCOUNT=$(gcloud beta billing projects describe $(gcloud config get-value project) --format="value(billingAccountName)")
 
-  if [ $? -eq 0 ]; then
-    success "Billing account linked successfully."
+  if [ -z "$CURRENT_BILLING_ACCOUNT" ]; then
+    loading_icon 10 "* Step 3/$global_staps:" &
+    billing_account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)" | head -n 1)
+    gcloud beta billing projects link $(gcloud config get-value project) \
+      --billing-account="$billing_account" > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Billing account linked successfully."
+    else
+      error_exit "Failed to link the billing account."
+    fi
   else
-    error_exit "Failed to link the billing account."
+    echo -n "* Step 3/$global_staps:"
+    skip "Project is already linked to a billing account. Skipping linking."
   fi
 }
 
 # Functie: Enable the required APIs.
 function enable_apis() { # Step 4
-  loading_icon 10 "* Stap 4/$global_staps:" &
+  loading_icon 5 "* Stap 4/$global_staps:" &
   gcloud services enable sqladmin.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
   gcloud services enable cloudresourcemanager.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
   gcloud services enable compute.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
@@ -119,122 +146,179 @@ function enable_apis() { # Step 4
   fi
 }
 
-# Functie: Create a new PostgreSQL instance.
+# Functie: Create a new PostgreSQL instance if it doesn't already exist.
 function create_postgres_instance() { # Step 5
-  loading_icon 600 "* Stap 5/$global_staps:" &
-  gcloud sql instances create db1 \
-    --database-version=POSTGRES_15 \
-    --tier=db-f1-micro \
-    --region=europe-west1 \
-    --authorized-networks=0.0.0.0/0 > ./Create-Infrastructure-IaC.log 2>&1
-  wait
+  local INSTANCE_NAME=db1
+  local DATABASE_VERSION=POSTGRES_15
+  local MACHINE_TYPE=db-f1-micro
+  local EXISTING_INSTANCE=$(gcloud sql instances list | grep -o "^$INSTANCE_NAME" > ./Create-Infrastructure-IaC.log 2>&1)
 
-  if [ $? -eq 0 ]; then
-    success "Cloud SQL instance created successfully."
+  if [ -z "$EXISTING_INSTANCE" ]; then
+    loading_icon 600 "* Stap 5/$global_staps:" &
+    gcloud sql instances create $INSTANCE_NAME \
+      --database-version=$DATABASE_VERSION \
+      --tier=$MACHINE_TYPE \
+      --region=$region \
+      --authorized-networks=0.0.0.0/0 > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Cloud SQL instance created successfully."
+    else
+      error_exit "Failed to create the Cloud SQL instance."
+    fi
   else
-    error_exit "Failed to create the Cloud SQL instance."
+    echo -n "* Stap 5/$global_staps:"
+    skip "Cloud SQL instance already exists. Skipping creation."
   fi
 }
 
-# Functie: Create a new PostgreSQL user.
+# Functie: Create a new PostgreSQL user if it doesn't already exist.
 function create_postgres_user() { # Step 6
-  loading_icon 10 "* Stap 6/$global_staps:" &
-  gcloud sql users create admin \
-    --instance=db1 \
-    --password=123 > ./Create-Infrastructure-IaC.log 2>&1
-  gcloud sql users delete postgres \
-    --instance=db1 --quiet > ./Create-Infrastructure-IaC.log 2>&1
-  wait
+  local INSTANCE_NAME=db1
+  local DATABASE_USER=admin
+  local EXISTING_USER=$(gcloud sql users list --instance=$INSTANCE_NAME | grep -o "^$DATABASE_USER")
 
-  if [ $? -eq 0 ]; then
-    success "Cloud SQL user created successfully."
+  if [ -z "$EXISTING_USER" ]; then
+    loading_icon 10 "* Stap 6/$global_staps:" &
+    gcloud sql users create $DATABASE_USER \
+      --instance=$INSTANCE_NAME \
+      --password=123 > ./Create-Infrastructure-IaC.log 2>&1
+    gcloud sql users delete postgres \
+      --instance=$INSTANCE_NAME --quiet > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Cloud SQL user created successfully."
+    else
+      error_exit "Failed to create the Cloud SQL user."
+    fi
   else
-    error_exit "Failed to create the Cloud SQL user."
+    echo -n "* Stap 6/$global_staps:"
+    skip "Cloud SQL user already exists. Skipping creation."
   fi
 }
 
-# Functie: Create a new PostgreSQL database.
+# Functie: Create a new PostgreSQL database if it doesn't already exist.
 function create_postgres_database() { # Step 7
-  loading_icon 10 "* Stap 7/$global_staps:" &
-  gcloud sql databases create codeforge \
-    --instance=db1 > ./Create-Infrastructure-IaC.log 2>&1
-  wait
+  local INSTANCE_NAME=db1
+  local DATABASE_NAME=codeforge
+  local EXISTING_DATABASE=$(gcloud sql databases list --instance=$INSTANCE_NAME --format="value(NAME)" | grep -o "^$DATABASE_NAME")
 
-  if [ $? -eq 0 ]; then
-    success "Cloud SQL database created successfully."
+  if [ -z "$EXISTING_DATABASE" ]; then
+    loading_icon 10 "* Stap 7/$global_staps:" &
+    gcloud sql databases create $DATABASE_NAME \
+      --instance=$INSTANCE_NAME > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Cloud SQL database created successfully."
+    else
+      error_exit "Failed to create the Cloud SQL database."
+    fi
   else
-    error_exit "Failed to create the Cloud SQL database."
+    echo -n "* Stap 7/$global_staps:"
+    skip "Cloud SQL database already exists. Skipping creation."
   fi
 }
 
-# Functie: Create a new GCloud Storage bucket.
+# Functie: Create a new GCloud Storage bucket if it doesn't already exist.
 function create_storage_bucket() { # Step 8
-  loading_icon 10 "* Stap 8/$global_staps:" &
-  gcloud storage buckets create gs://codeforge-video-bucket \
-    --location=europe-west1 > ./Create-Infrastructure-IaC.log 2>&1
-  wait
+  local BUCKET_NAME=codeforge-video-bucket
+  local EXISTING_BUCKET=$(gsutil ls | grep -o "gs://${BUCKET_NAME}/")
 
-  if [ $? -eq 0 ]; then
-    success "Cloud Storage bucket created successfully."
+  if [ -z "$EXISTING_BUCKET" ]; then
+    loading_icon 10 "* Step 8/$global_staps:" &
+    gcloud storage buckets create $BUCKET_NAME \
+      --location=$region > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Cloud Storage bucket created successfully."
+    else
+      error_exit "Failed to create the Cloud Storage bucket."
+    fi
   else
-    error_exit "Failed to create the Cloud Storage bucket."
+    echo -n "* Step 8/$global_staps:"
+    skip "Cloud Storage bucket already exists. Skipping creation."
   fi
 }
 
-# Functie: Create a new service account and add permissions
+# Functie: Create a new service account if it doesn't already exist.
 function create_service_account() { # Step 9
-  loading_icon 10 "* Stap 9/$global_staps:" &
-  gcloud iam service-accounts create $name_service_account \
-    --display-name="CodeForge Service Account" \
-    --description="Service account for CodeForge" > ./Create-Infrastructure-IaC.log 2>&1
-  wait
+  local EXISTING_ACCOUNT=$(gcloud iam service-accounts list | grep -o "${name_service_account}@${projectid}.iam.gserviceaccount.com")
 
-  if [ $? -eq 0 ]; then
-    success "Service account created successfully."
+  if [ -z "$EXISTING_ACCOUNT" ]; then
+    loading_icon 10 "* Step 9/$global_staps:" &
+    gcloud iam service-accounts create $name_service_account \
+      --display-name="CodeForge Service Account" \
+      --description="Service account for CodeForge" > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Service account created successfully."
+    else
+      error_exit "Failed to create the service account."
+    fi
   else
-    error_exit "Failed to create the service account."
+    echo -n "* Step 9/$global_staps:"
+    skip "Service account already exists. Skipping creation."
   fi
 }
 
-# Functie: Add permissions to the service account.
+# Functie: Add permissions to the service account if it doesn't already have them.
 function add_permissions_to_service_account() { # Step 10
-  local user_email="${name_service_account}@${projectid}.iam.gserviceaccount.com"
-  local role="roles/storage.admin"
-  local json_key_file="./service-account-key.json"
-  
-  loading_icon 10 "* Stap 10/$global_staps:" &
-  gcloud projects add-iam-policy-binding $projectid \
-    --member=serviceAccount:$user_email \
-    --role=$role > ./Create-Infrastructure-IaC.log 2>&1
-  wait
+  local USER_EMAIL="${name_service_account}@${projectid}.iam.gserviceaccount.com"
+  local ROLE="roles/storage.admin"
+  local EXISTING_BINDINGS=$(gcloud projects get-iam-policy $projectid --flatten="bindings[].members" --format="value(bindings.members)" | grep -o "serviceAccount:${user_email}")
 
-  if [ $? -eq 0 ]; then
-    success "Permissions added to the service account successfully."
+  if [ -z "$EXISTING_BINDINGS" ]; then
+    loading_icon 10 "* Step 10/$global_staps:" &
+    gcloud projects add-iam-policy-binding $projectid \
+      --member=serviceAccount:$USER_EMAIL \
+      --role=$ROLE > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Permissions added to the service account successfully."
+    else
+      error_exit "Failed to add permissions to the service account."
+    fi
   else
-    error_exit "Failed to add permissions to the service account."
+    echo -n "* Step 10/$global_staps:"
+    skip "Permissions for the service account already exist. Skipping addition."
   fi
+
   # Export the service account key to a JSON file.
   gcloud iam service-accounts keys create $json_key_file \
-    --iam-account=$user_email > ./Create-Infrastructure-IaC.log 2>&1
+    --iam-account=$USER_EMAIL > ./Create-Infrastructure-IaC.log 2>&1
 }
 
+# Functie: Create a new VM instance.
 function create_vm_instance() { # Step 11
   local INSTANCE_NAME=codeforge-vm
-  local MACHINE_TYPE=n1-standard-1
+  local MACHINE_TYPE=f1-micro
   local IMAGE_PROJECT=ubuntu-os-cloud
   local IMAGE_FAMILY=ubuntu-2004-lts
   local ZONE=europe-west1-c
   local STARTUP_SCRIPT='
-  #!/bin/bash
   sudo apt-get update -y && sudo apt-get upgrade -y
   '
 
+  loading_icon 10 "* Stap 11/$global_staps:" &
   gcloud compute instances create $INSTANCE_NAME \
     --machine-type=$MACHINE_TYPE \
     --image-project=$IMAGE_PROJECT \
     --image-family=$IMAGE_FAMILY \
     --zone=$ZONE \
     --metadata=startup-script=\"$STARTUP_SCRIPT\"
+  wait
+
+  if [ $? -eq 0 ]; then
+    success "VM instance created successfully."
+  else
+    error_exit "Failed to create the VM instance."
+  fi
 }
 
 # Functie: Bash validatie.
