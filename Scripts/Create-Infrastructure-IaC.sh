@@ -13,11 +13,11 @@ projectid="codeforge-$(date +%Y%m%d%H%M%S)"
 #projectid="codeforge-projectid"
 name_service_account="codeforge-service-account"
 line="*********************************************"
-global_staps=10
+global_staps=11
 
 # Functie: Error afhandeling.
 function error_exit() {
-  echo -e "\n*\n* ${rood}$1${reset}\n*\n* Exiting script.\n${line}"
+  echo -e "*\n* ${rood}$1${reset}\n*\n* Exiting script.\n${line}"
   exit 1
 }
 
@@ -109,6 +109,7 @@ function enable_apis() { # Step 4
   loading_icon 10 "* Stap 4/$global_staps:" &
   gcloud services enable sqladmin.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
   gcloud services enable cloudresourcemanager.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
+  gcloud services enable compute.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
   wait
 
   if [ $? -eq 0 ]; then
@@ -217,6 +218,27 @@ function add_permissions_to_service_account() { # Step 10
     --iam-account=$user_email > ./Create-Infrastructure-IaC.log 2>&1
 }
 
+function create_vm_instance() { # Step 11
+  local INSTANCE_NAME=codeforge-vm
+  local MACHINE_TYPE=n1-standard-1
+  local IMAGE_PROJECT=ubuntu-os-cloud
+  local IMAGE_FAMILY=ubuntu-2004-lts
+  local ZONE=europe-west1-c
+  local STARTUP_SCRIPT="
+  #!/bin/bash
+  sudo apt-get update -y && sudo apt-get upgrade -y
+  "
+
+
+  gcloud compute instances create $INSTANCE_NAME \
+    --machine-type=$MACHINE_TYPE \
+    --image-project=$IMAGE_PROJECT \
+    --image-family=$IMAGE_FAMILY \
+    --zone=$ZONE \
+    --metadata=startup-script=\"$STARTUP_SCRIPT\"
+
+}
+
 # Functie: Bash validatie.
 function bash_validation() {
   if [ -z "$BASH_VERSION" ]; then
@@ -230,7 +252,7 @@ function bash_validation() {
   fi
 }
 
-touch ./Create-Infrastructure-IaC.log
+touch ./Create-Infrastructure-IaC.logs
 welcome_message
 bash_validation           # Step 0
 
