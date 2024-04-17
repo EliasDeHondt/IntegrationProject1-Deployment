@@ -133,7 +133,7 @@ function link_billing_account() { # Step 3
 
 # Functie: Enable the required APIs.
 function enable_apis() { # Step 4
-  loading_icon 20 "* Stap 4/$global_staps:" &
+  loading_icon 10 "* Stap 4/$global_staps:" &
   gcloud services enable sqladmin.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
   gcloud services enable cloudresourcemanager.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
   gcloud services enable compute.googleapis.com > ./Create-Infrastructure-IaC.log 2>&1
@@ -154,7 +154,7 @@ function create_postgres_instance() { # Step 5
   local EXISTING_INSTANCE=$(gcloud sql instances list --filter="name=$INSTANCE_NAME" --format="value(NAME)" 2>/dev/null)
 
   if [ -z "$EXISTING_INSTANCE" ]; then
-    loading_icon 400 "* Stap 5/$global_staps:" &
+    loading_icon 500 "* Stap 5/$global_staps:" &
     gcloud sql instances create $INSTANCE_NAME \
       --database-version=$DATABASE_VERSION \
       --tier=$MACHINE_TYPE \
@@ -301,17 +301,17 @@ function create_vm_instance() { # Step 11
   local IMAGE_PROJECT=ubuntu-os-cloud
   local IMAGE_FAMILY=ubuntu-2004-lts
   local ZONE=europe-west1-c
-  # local STARTUP_SCRIPT='
-  # sudo apt-get update -y && sudo apt-get upgrade -y
-  # '
+  local STARTUP_SCRIPT='
+  sudo apt-get update -y && sudo apt-get upgrade -y
+  '
 
   loading_icon 10 "* Stap 11/$global_staps:" &
   gcloud compute instances create $INSTANCE_NAME \
     --machine-type=$MACHINE_TYPE \
     --image-project=$IMAGE_PROJECT \
     --image-family=$IMAGE_FAMILY \
-    --zone=$ZONE # \
-  #   --metadata=startup-script=\"$STARTUP_SCRIPT\"
+    --zone=$ZONE \
+    --metadata=startup-script=\"$STARTUP_SCRIPT\"
   wait
 
   if [ $? -eq 0 ]; then
@@ -368,7 +368,7 @@ wait
 add_permissions_to_service_account # Step 10
 wait
 
-create_vm_instance        # Step 11
-wait
+#create_vm_instance        # Step 11
+#wait
 
 success_exit "Infrastructure created successfully."
