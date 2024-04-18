@@ -390,7 +390,6 @@ function create_instance_templates() { # Step 12
   local IMAGE_FAMILY=ubuntu-2004-lts
   local STARTUP_SCRIPT='
   #!/bin/bash
-
   # Update and install dependencies:
   wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
   sudo dpkg -i packages-microsoft-prod.deb
@@ -412,7 +411,7 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
   chmod 700 ~/.ssh
   chmod 600 ~/.ssh/id_ed25519
   ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
-  git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
+  GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
 
   # Install dependencies and build the project:
   cd development/MVC/ClientApp
@@ -440,6 +439,7 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
   fi
 }
 
+# Functie: Create a new instance group if it doesn't already exist.
 function create_instance_group() { # Step 15
   local INSTANCE_GROUP_SIZE=1
   local MIN_REPLICAS=1
@@ -474,6 +474,7 @@ function create_instance_group() { # Step 15
   fi
 }
 
+# Functie: Create a new load balancer if it doesn't already exist.
 function create_load_balancer() { # Step 16
   local LOAD_BALANCER_NAME=codeforge-load-balancer
   local BACKEND_SERVICE_NAME=codeforge-backend-service
@@ -521,6 +522,7 @@ function create_load_balancer() { # Step 16
     skip "Load balancer already exists. Skipping creation."
   fi
 }
+
 
 welcome_message           # Welcome message
 bash_validation           # Step 0
