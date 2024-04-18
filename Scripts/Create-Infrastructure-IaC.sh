@@ -385,18 +385,20 @@ function create_firewallrule() { # Step 13
 
 # Functie: Create a new instance template.
 function create_instance_templates() { # Step 12
-  local MACHINE_TYPE=f1-micro
+  local MACHINE_TYPE=n1-standard-4
   local IMAGE_PROJECT=ubuntu-os-cloud
   local IMAGE_FAMILY=ubuntu-2004-lts
   local STARTUP_SCRIPT='
   #!/bin/bash
 
   # Update and install dependencies:
+  wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+  sudo dpkg -i packages-microsoft-prod.deb
   sudo apt-get update -y
   sudo apt-get upgrade -y
-  sudo apt-get install -yq wget git
+  sudo apt-get install -yq wget git apt-transport-https dotnet-sdk-7.0
   wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
-  sudo nvm install 20.11.1
+  . ~/.nvm/nvm.sh && nvm install 20.11.1
 
   # Add SSH key & clone the repository from GitLab:
   mkdir ~/.ssh
@@ -414,13 +416,12 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
 
   # Install dependencies and build the project:
   cd development/MVC/ClientApp
-  sudo npm rebuild
-  sudo npm install
-  sudo npm run build
+  . ~/.nvm/nvm.sh && npm rebuild && npm install && npm run build
   cd ../
-  sudo dotnet build
-  sudo dotnet publish "MVC.csproj" -c Release -o /app
-  sudo dotnet MVC.dll
+  . ~/.nvm/nvm.sh && dotnet build
+  mkdir ~/app
+  . ~/.nvm/nvm.sh && dotnet publish "MVC.csproj" -c Release -o ~/app
+  . ~/.nvm/nvm.sh && dotnet ~/app/MVC.dll
   '
 
   loading_icon 10 "* Stap 14/$global_staps:" &
