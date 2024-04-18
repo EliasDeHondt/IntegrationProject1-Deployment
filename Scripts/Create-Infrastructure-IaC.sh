@@ -383,14 +383,43 @@ function create_firewallrule() { # Step 13
   fi
 }
 
+function set_metadata() { # Step 14
+  local METADATA_KEY="SSH-keys-deployment"
+  local METADATA_VALUE="-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
+WQAAAAtzc2gtZWQyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SA
+AAAEB+ENgDO216QrnGM/RC0il4n7Nx00qCQxwA09vo8seZ7afXZBOZmLtc972tVmbuD0jl
+vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
+-----END OPENSSH PRIVATE KEY-----"
+  local EXISTING_METADATA=$(gcloud compute project-info describe --format="value(commonInstanceMetadata.items[0].key)" | grep -o "^$METADATA_KEY")
+
+  if [ -z "$EXISTING_METADATA" ]; then
+    loading_icon 10 "* Step 14/$global_staps:" &
+    gcloud compute project-info add-metadata --metadata=$METADATA_KEY="$METADATA_VALUE" > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Metadata set successfully."
+    else
+      error_exit "Failed to set the metadata."
+    fi
+  else
+    echo -n "* Step 14/$global_staps:"
+    skip "Metadata already exists. Skipping setting."
+  fi
+  
+}
+
 # Functie: Create a new instance template.
-function create_instance_templates() { # Step 12
+function create_instance_templates() { # Step 15
   local MACHINE_TYPE=n1-standard-4
   local IMAGE_PROJECT=ubuntu-os-cloud
   local IMAGE_FAMILY=ubuntu-2004-lts
   local STARTUP_SCRIPT='
   #!/bin/bash
   # Update and install dependencies:
+  cd /home/ubuntu
   wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
   sudo dpkg -i packages-microsoft-prod.deb
   sudo apt-get update -y
@@ -401,13 +430,8 @@ function create_instance_templates() { # Step 12
 
   # Add SSH key & clone the repository from GitLab:
   mkdir ~/.ssh
-  echo "-----BEGIN OPENSSH PRIVATE KEY-----
-b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
-WQAAAAtzc2gtZWQyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SA
-AAAEB+ENgDO216QrnGM/RC0il4n7Nx00qCQxwA09vo8seZ7afXZBOZmLtc972tVmbuD0jl
-vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
------END OPENSSH PRIVATE KEY-----" >> ~/.ssh/id_ed25519
+  SSH_PRIVATE_KEY=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/ssh-private-key)
+  echo "$SSH_PRIVATE_KEY" >> ~/.ssh/id_ed25519
   chmod 700 ~/.ssh
   chmod 600 ~/.ssh/id_ed25519
   ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
@@ -423,7 +447,7 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
   . ~/.nvm/nvm.sh && dotnet ~/app/MVC.dll
   '
 
-  loading_icon 10 "* Stap 14/$global_staps:" &
+  loading_icon 10 "* Stap 15/$global_staps:" &
   gcloud compute instance-templates create $template_name \
     --machine-type=$MACHINE_TYPE \
     --image-project=$IMAGE_PROJECT \
@@ -440,7 +464,7 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
 }
 
 # Functie: Create a new instance group if it doesn't already exist.
-function create_instance_group() { # Step 15
+function create_instance_group() { # Step 16
   local INSTANCE_GROUP_SIZE=1
   local MIN_REPLICAS=1
   local MAX_REPLICAS=5
@@ -449,7 +473,7 @@ function create_instance_group() { # Step 15
   local EXISTING_INSTANCE_GROUP=$(gcloud compute instance-groups list --format="value(NAME)" | grep -o "^$instance_group_name")
 
   if [ -z "$EXISTING_INSTANCE_GROUP" ]; then
-    loading_icon 10 "* Step 15/$global_staps:" &
+    loading_icon 10 "* Step 16/$global_staps:" &
     gcloud compute instance-groups managed create $instance_group_name \
       --base-instance-name=$instance_group_name \
       --size=$INSTANCE_GROUP_SIZE \
@@ -469,13 +493,13 @@ function create_instance_group() { # Step 15
       error_exit "Failed to create the instance group."
     fi
   else
-    echo -n "* Step 15/$global_staps:"
+    echo -n "* Step 16/$global_staps:"
     skip "Instance group already exists. Skipping creation."
   fi
 }
 
 # Functie: Create a new load balancer if it doesn't already exist.
-function create_load_balancer() { # Step 16
+function create_load_balancer() { # Step 17
   local LOAD_BALANCER_NAME=codeforge-load-balancer
   local BACKEND_SERVICE_NAME=codeforge-backend-service
   local HEALTH_CHECK_NAME=codeforge-health-check
@@ -486,7 +510,7 @@ function create_load_balancer() { # Step 16
   local EXISTING_LOAD_BALANCER=$(gcloud compute forwarding-rules list --format="value(NAME)" | grep -o "^$FORWARDING_RULE_NAME")
 
   if [ -z "$EXISTING_LOAD_BALANCER" ]; then
-    loading_icon 10 "* Step 16/$global_staps:" &
+    loading_icon 10 "* Step 17/$global_staps:" &
     gcloud compute health-checks create http $HEALTH_CHECK_NAME \
       --port=80 > ./Create-Infrastructure-IaC.log 2>&1
 
@@ -518,7 +542,7 @@ function create_load_balancer() { # Step 16
       error_exit "Failed to create the load balancer."
     fi
   else
-    echo -n "* Step 16/$global_staps:"
+    echo -n "* Step 17/$global_staps:"
     skip "Load balancer already exists. Skipping creation."
   fi
 }
@@ -556,11 +580,13 @@ wait
 create_firewallrule       # Step 13
 wait
 
-create_instance_templates  # Step 14
+set_metadata              # Step 14
 wait
-create_instance_group        # Step 15
+create_instance_templates  # Step 15
 wait
-create_load_balancer         # Step 16
+create_instance_group     # Step 16
+wait
+create_load_balancer      # Step 17
 wait
 success_exit "Infrastructure created successfully."
 
