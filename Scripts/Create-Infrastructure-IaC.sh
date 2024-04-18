@@ -10,12 +10,18 @@ rood='\e[0;31m'
 blauw='\e[0;34m'
 yellow='\e[0;33m'
 groen='\e[0;32m'
-projectid="codeforge-$(date +%Y%m%d%H%M%S)"
-#projectid="codeforge-projectid"
-name_service_account="codeforge-service-account"
 line="*********************************************"
 global_staps=11
-region=europe-west1
+
+# Default GCloud variables.
+region=us-central1
+zone=us-central1-c
+template_name=codeforge-template
+network_name=codeforge-network
+subnet_name=codeforge-subnet
+projectid="codeforge-$(date +%Y%m%d%H%M%S)" # projectid="codeforge-projectid"
+name_service_account="codeforge-service-account"
+instance_group_name=codeforge-instance-group
 
 
 # Functie: Error afhandeling.
@@ -35,6 +41,7 @@ function success() {
   echo -e "\n*\n* ${groen}$1${reset}\n*"
 }
 
+# Functie: Skip afhandeling.
 function skip() {
   echo -e "\n*\n* ${yellow}$1${reset}\n*"
 }
@@ -47,6 +54,19 @@ function welcome_message() {
   echo -e "*     ${blauw}Running CodeForge create script.${reset}      *"
   echo "*                                           *"
   echo "$line"
+}
+
+# Functie: Bash validatie.
+function bash_validation() {
+  if [ -z "$BASH_VERSION" ]; then
+    error_exit "This script must be run using Bash."
+  fi
+
+  [ "$EUID" -ne 0 ] && error_exit "Script must be run as root: sudo $0"
+
+  if ! command -v gcloud &> /dev/null; then
+    error_exit "Google Cloud CLI is not installed. Please install it before running this script."
+  fi
 }
 
 # Functie: Print the loading icon.
@@ -294,81 +314,241 @@ function add_permissions_to_service_account() { # Step 10
     --iam-account=$USER_EMAIL > ./Create-Infrastructure-IaC.log 2>&1
 }
 
-# Functie: Create a new VM instance.
-function create_vm_instance() { # Step 11
-  local INSTANCE_NAME=codeforge-vm
+# Functie: Create a new network if it doesn't already exist.
+function create_network() { # Step 11
+  local EXISTING_NETWORK=$(gcloud compute networks list --format="value(NAME)" | grep -o "^$network_name")
+
+  if [ -z "$EXISTING_NETWORK" ]; then
+    loading_icon 10 "* Step 11/$global_staps:" &
+    gcloud compute networks create $network_name \
+      --subnet-mode=auto \
+      --bgp-routing-mode=regional > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Network created successfully."
+    else
+      error_exit "Failed to create the network."
+    fi
+  else
+    echo -n "* Step 11/$global_staps:"
+    skip "Network already exists. Skipping creation."
+  fi
+}
+
+# Functie: Create a new subnet if it doesn't already exist.
+function create_network_subnet() { # Step 12
+  local EXISTING_SUBNET=$(gcloud compute networks subnets list --network=$network_name --format="value(NAME)" | grep -o "^$SUBNET_NAME")
+
+  if [ -z "$EXISTING_SUBNET" ]; then
+    loading_icon 10 "* Step 12/$global_staps:" &
+    gcloud compute networks subnets create $SUBNET_NAME \
+      --network=$network_name \
+      --region=$region \
+      --range=10.0.0.0/24 > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+  
+  if [ $? -eq 0 ]; then
+    success "Subnet created successfully."
+  else
+    error_exit "Failed to create the subnet."
+  fi
+  else
+    echo -n "* Step 12/$global_staps:"
+    skip "Subnet already exists. Skipping creation."
+  fi
+}
+
+# Functie: Create a new firewall rule if it doesn't already exist.
+function create_firewallrule() { # Step 13
+  local FIREWALL_RULE_NAME=codeforge-firewall-rule
+  local EXISTING_FIREWALL_RULE=$(gcloud compute firewall-rules list --format="value(NAME)" | grep -o "^$FIREWALL_RULE_NAME")
+
+  if [ -z "$EXISTING_FIREWALL_RULE" ]; then
+    loading_icon 10 "* Step 13/$global_staps:" &
+    gcloud compute firewall-rules create $FIREWALL_RULE_NAME \
+      --network=$network_name \
+      --allow=tcp:80,tcp:443,tcp:22 \
+      --source-ranges=0.0.0.0/0 > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Firewall rule created successfully."
+    else
+      error_exit "Failed to create the firewall rule."
+    fi
+  else
+    echo -n "* Step 13/$global_staps:"
+    skip "Firewall rule already exists. Skipping creation."
+  fi
+}
+
+# Functie: Create a new instance template.
+function create_instance_templates() { # Step 12
   local MACHINE_TYPE=f1-micro
   local IMAGE_PROJECT=ubuntu-os-cloud
   local IMAGE_FAMILY=ubuntu-2004-lts
-  local ZONE=europe-west1-c
   local STARTUP_SCRIPT='
-  sudo apt-get update -y && sudo apt-get upgrade -y
+  #!/bin/bash
+  sudo apt-get update -y
+  sudo apt-get upgrade -y
+  # sudo apt-get install -yq wget
+  # wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
+  # sudo nvm install 20.11.1
+  # sudo npm rebuild 
+  # sudo npm install
+  # sudo npm run build
+  # sudo dotnet build
+  # sudo dotnet publish "MVC.csproj" -c Release -o /app
   '
 
-  loading_icon 10 "* Stap 11/$global_staps:" &
-  gcloud compute instances create $INSTANCE_NAME \
+  loading_icon 10 "* Stap 14/$global_staps:" &
+  gcloud compute instance-templates create $template_name \
     --machine-type=$MACHINE_TYPE \
     --image-project=$IMAGE_PROJECT \
     --image-family=$IMAGE_FAMILY \
-    --zone=$ZONE \
-    --metadata=startup-script=\"$STARTUP_SCRIPT\"
+    --subnet=projects/$projectid/regions/$region/subnetworks/$subnet_name \
+    --metadata=startup-script="$STARTUP_SCRIPT" > ./Create-Infrastructure-IaC.log 2>&1
   wait
 
   if [ $? -eq 0 ]; then
-    success "VM instance created successfully."
+    success "Instance template created successfully."
   else
-    error_exit "Failed to create the VM instance."
+    error_exit "Failed to create the instance template."
   fi
 }
 
-# Functie: Bash validatie.
-function bash_validation() {
-  if [ -z "$BASH_VERSION" ]; then
-    error_exit "This script must be run using Bash."
-  fi
+function create_instance_group() { # Step 15
+  local INSTANCE_GROUP_SIZE=1
+  local MIN_REPLICAS=1
+  local MAX_REPLICAS=5
+  local TARGET_CPU_UTILIZATION=0.75
 
-  [ "$EUID" -ne 0 ] && error_exit "Script must be run as root: sudo $0"
+  local EXISTING_INSTANCE_GROUP=$(gcloud compute instance-groups list --format="value(NAME)" | grep -o "^$instance_group_name")
 
-  if ! command -v gcloud &> /dev/null; then
-    error_exit "Google Cloud CLI is not installed. Please install it before running this script."
+  if [ -z "$EXISTING_INSTANCE_GROUP" ]; then
+    loading_icon 10 "* Step 15/$global_staps:" &
+    gcloud compute instance-groups managed create $instance_group_name \
+      --base-instance-name=$instance_group_name \
+      --size=$INSTANCE_GROUP_SIZE \
+      --template=$template_name \
+      --zone=$zone > ./Create-Infrastructure-IaC.log 2>&1
+
+    gcloud compute instance-groups managed set-autoscaling $instance_group_name \
+      --zone=$zone \
+      --min-num-replicas=$MIN_REPLICAS \
+      --max-num-replicas=$MAX_REPLICAS \
+      --target-cpu-utilization=$TARGET_CPU_UTILIZATION > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Instance group created successfully."
+    else
+      error_exit "Failed to create the instance group."
+    fi
+  else
+    echo -n "* Step 15/$global_staps:"
+    skip "Instance group already exists. Skipping creation."
   fi
 }
 
-touch ./Create-Infrastructure-IaC.log
-welcome_message
+function create_load_balancer() { # Step 16
+  local LOAD_BALANCER_NAME=codeforge-load-balancer
+  local BACKEND_SERVICE_NAME=codeforge-backend-service
+  local HEALTH_CHECK_NAME=codeforge-health-check
+  local URL_MAP_NAME=codeforge-url-map
+  local TARGET_PROXY_NAME=codeforge-target-proxy
+  local FORWARDING_RULE_NAME=codeforge-forwarding-rule
+
+  local EXISTING_LOAD_BALANCER=$(gcloud compute forwarding-rules list --format="value(NAME)" | grep -o "^$FORWARDING_RULE_NAME")
+
+  if [ -z "$EXISTING_LOAD_BALANCER" ]; then
+    loading_icon 10 "* Step 16/$global_staps:" &
+    gcloud compute health-checks create http $HEALTH_CHECK_NAME \
+      --port=80 > ./Create-Infrastructure-IaC.log 2>&1
+
+    gcloud compute backend-services create $BACKEND_SERVICE_NAME \
+      --protocol=HTTP \
+      --health-checks=$HEALTH_CHECK_NAME \
+      --global > ./Create-Infrastructure-IaC.log 2>&1
+
+    gcloud compute backend-services add-backend $BACKEND_SERVICE_NAME \
+      --instance-group=$instance_group_name \
+      --instance-group-zone=$zone \
+      --global > ./Create-Infrastructure-IaC.log 2>&1
+
+    gcloud compute url-maps create $URL_MAP_NAME \
+      --default-service=$BACKEND_SERVICE_NAME > ./Create-Infrastructure-IaC.log 2>&1
+
+    gcloud compute target-http-proxies create $TARGET_PROXY_NAME \
+      --url-map=$URL_MAP_NAME > ./Create-Infrastructure-IaC.log 2>&1
+
+    gcloud compute forwarding-rules create $FORWARDING_RULE_NAME \
+      --global \
+      --target-http-proxy=$TARGET_PROXY_NAME \
+      --ports=80 > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Load balancer created successfully."
+    else
+      error_exit "Failed to create the load balancer."
+    fi
+  else
+    echo -n "* Step 16/$global_staps:"
+    skip "Load balancer already exists. Skipping creation."
+  fi
+}
+
+welcome_message           # Welcome message
 bash_validation           # Step 0
-
+touch ./Create-Infrastructure-IaC.log
 create_project            # Step 1
 wait
-
 set_project               # Step 2
 wait
-
 link_billing_account      # Step 3
 wait
-
 enable_apis               # Step 4
 wait
-
 create_postgres_instance  # Step 5
 wait
-
 create_postgres_user      # Step 6
 wait
-
 create_postgres_database  # Step 7
 wait
-
 create_storage_bucket     # Step 8
 wait
-
 create_service_account    # Step 9
 wait
-
 add_permissions_to_service_account # Step 10
 wait
 
-#create_vm_instance        # Step 11
-#wait
 
+create_network            # Step 11
+wait
+create_network_subnet     # Step 12
+wait
+create_firewallrule       # Step 13
+wait
+
+create_instance_templates  # Step 14
+wait
+create_instance_group        # Step 15
+wait
+create_load_balancer         # Step 16
+wait
 success_exit "Infrastructure created successfully."
+
+
+
+# gcloud compute instances create codeforge-vm --source-instance-template=$template_name --zone=us-central1-c
+
+# gcloud compute instances stop codeforge-vm --zone=us-central1-c
+# gcloud compute instances delete codeforge-vm --zone=us-central1-c --quiet
+
+# gcloud compute instance-templates delete codeforge-template --quiet
+
+# gcloud sql instances delete db1 --quiet
+
+# gcloud compute instance-groups managed delete codeforge-instance-group --zone=us-central1-c --quiet
