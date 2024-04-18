@@ -390,16 +390,37 @@ function create_instance_templates() { # Step 12
   local IMAGE_FAMILY=ubuntu-2004-lts
   local STARTUP_SCRIPT='
   #!/bin/bash
+
+  # Update and install dependencies:
   sudo apt-get update -y
   sudo apt-get upgrade -y
-  # sudo apt-get install -yq wget
-  # wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
-  # sudo nvm install 20.11.1
-  # sudo npm rebuild 
-  # sudo npm install
-  # sudo npm run build
-  # sudo dotnet build
-  # sudo dotnet publish "MVC.csproj" -c Release -o /app
+  sudo apt-get install -yq wget git
+  wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
+  sudo nvm install 20.11.1
+
+  # Add SSH key & clone the repository from GitLab:
+  mkdir ~/.ssh
+  echo "-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
+WQAAAAtzc2gtZWQyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SA
+AAAEB+ENgDO216QrnGM/RC0il4n7Nx00qCQxwA09vo8seZ7afXZBOZmLtc972tVmbuD0jl
+vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
+-----END OPENSSH PRIVATE KEY-----" >> ~/.ssh/id_ed25519
+  chmod 700 ~/.ssh
+  chmod 600 ~/.ssh/id_ed25519
+  ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
+  git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
+
+  # Install dependencies and build the project:
+  cd development/MVC/ClientApp
+  sudo npm rebuild
+  sudo npm install
+  sudo npm run build
+  cd ../
+  sudo dotnet build
+  sudo dotnet publish "MVC.csproj" -c Release -o /app
+  sudo dotnet MVC.dll
   '
 
   loading_icon 10 "* Stap 14/$global_staps:" &
@@ -547,8 +568,15 @@ success_exit "Infrastructure created successfully."
 # gcloud compute instances stop codeforge-vm --zone=us-central1-c
 # gcloud compute instances delete codeforge-vm --zone=us-central1-c --quiet
 
-# gcloud compute instance-templates delete codeforge-template --quiet
-
 # gcloud sql instances delete db1 --quiet
 
+
+# gcloud compute forwarding-rules delete codeforge-forwarding-rule --global --quiet
+# gcloud compute target-http-proxies delete codeforge-target-proxy --quiet
+# gcloud compute url-maps delete codeforge-url-map --quiet
+# gcloud compute backend-services delete codeforge-backend-service --global --quiet
+# gcloud compute health-checks delete codeforge-health-check --quiet
+
 # gcloud compute instance-groups managed delete codeforge-instance-group --zone=us-central1-c --quiet
+
+# gcloud compute instance-templates delete codeforge-template --quiet
