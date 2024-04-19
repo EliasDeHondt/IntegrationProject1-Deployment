@@ -422,38 +422,35 @@ function create_instance_templates() { # Step 15
   echo "codeforge:123" | sudo chpasswd
   sudo usermod -aG sudo codeforge
   sudo su - codeforge
-  cd /home/codeforg
-  echo "Create a new user and add it to the sudo group and home directory and login using the user" >> /home/codeforge/progress.txt
+  cd /home/codeforge
+  
   
   # Update and install dependencies:
-  sudo wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-  sudo dpkg -i packages-microsoft-prod.deb
+  sudo wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O /home/codeforge/packages-microsoft-prod.deb 
+  sudo dpkg -i /home/codeforge/packages-microsoft-prod.deb
   sudo apt-get update -y && sudo apt-get upgrade -y
   sudo apt-get install -yq git apt-transport-https dotnet-sdk-7.0
-  echo "Update and install dependencies" >> /home/codeforge/progress.txt
+  
   
   # Add SSH key & clone the repository from GitLab:
   mkdir /home/codeforge/.ssh
-  
   SSH_PRIVATE_KEY=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/SSH-keys-deployment" -H "Metadata-Flavor: Google")
   sudo echo "$SSH_PRIVATE_KEY" >> /home/codeforge/.ssh/id_ed25519
   sudo chmod 700 /home/codeforge/.ssh
   sudo chmod 600 /home/codeforge/.ssh/id_ed25519
   ssh-keyscan gitlab.com >> /home/codeforge/.ssh/known_hosts
   GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
-  echo "Add SSH key & clone the repository from GitLab" >> /home/codeforge/progress.txt
+  
 
   # Install dependencies and build the project:
-  wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
+  sudo wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh -d /home/codeforge | bash
   . /home/codeforge/.nvm/nvm.sh && nvm install 20.11.1
-  cd development/MVC/ClientApp
+  cd /home/codeforge/development/MVC/ClientApp
   . /home/codeforge/.nvm/nvm.sh && npm rebuild && npm install && npm run build
-  cd ../
   dotnet build
   mkdir /home/codeforge/app
   dotnet publish "MVC.csproj" -c Release -o /home/codeforge/app
-  dotnet /home/codeforge/app/MVC.dll >> /home/codeforge/progress.txt
-  echo "Install dependencies and build the project" >> /home/codeforge/progress.txt
+  dotnet /home/codeforge/app/MVC.dll 2>> /home/codeforge/progress.txt
   '
   gcloud compute instances create codeforge-vm --source-instance-template=$template_name --zone=us-central1-c
   gcloud compute instances delete codeforge-vm --zone=us-central1-c --quiet
