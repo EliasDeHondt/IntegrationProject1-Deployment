@@ -426,32 +426,33 @@ function create_instance_templates() { # Step 15
   echo "Create a new user and add it to the sudo group and home directory and login using the user" >> /home/codeforge/progress.txt
   
   # Update and install dependencies:
-  wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-  dpkg -i packages-microsoft-prod.deb
-  apt-get update -y && apt-get upgrade -y
-  apt-get install -yq git apt-transport-https dotnet-sdk-7.0
-  wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
-  . ~/.nvm/nvm.sh && nvm install 20.11.1
+  sudo wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+  sudo dpkg -i packages-microsoft-prod.deb
+  sudo apt-get update -y && sudo apt-get upgrade -y
+  sudo apt-get install -yq git apt-transport-https dotnet-sdk-7.0
   echo "Update and install dependencies" >> /home/codeforge/progress.txt
   
-# Add SSH key & clone the repository from GitLab:
-  mkdir ~/.ssh
+  # Add SSH key & clone the repository from GitLab:
+  mkdir /home/codeforge/.ssh
+  
   SSH_PRIVATE_KEY=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/SSH-keys-deployment" -H "Metadata-Flavor: Google")
-  echo "$SSH_PRIVATE_KEY" >> ~/.ssh/id_ed25519
-  chmod 700 ~/.ssh
-  chmod 600 ~/.ssh/id_ed25519
-  ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
+  sudo echo "$SSH_PRIVATE_KEY" >> /home/codeforge/.ssh/id_ed25519
+  sudo chmod 700 /home/codeforge/.ssh
+  sudo chmod 600 /home/codeforge/.ssh/id_ed25519
+  ssh-keyscan gitlab.com >> /home/codeforge/.ssh/known_hosts
   GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
   echo "Add SSH key & clone the repository from GitLab" >> /home/codeforge/progress.txt
 
   # Install dependencies and build the project:
+  wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
+  . /home/codeforge/.nvm/nvm.sh && nvm install 20.11.1
   cd development/MVC/ClientApp
-  . ~/.nvm/nvm.sh && npm rebuild && npm install && npm run build
+  . /home/codeforge/.nvm/nvm.sh && npm rebuild && npm install && npm run build
   cd ../
-  . ~/.nvm/nvm.sh && dotnet build
-  mkdir ~/app
-  . ~/.nvm/nvm.sh && dotnet publish "MVC.csproj" -c Release -o ~/app
-  . ~/.nvm/nvm.sh && dotnet ~/app/MVC.dll
+  dotnet build
+  mkdir /home/codeforge/app
+  dotnet publish "MVC.csproj" -c Release -o /home/codeforge/app
+  dotnet /home/codeforge/app/MVC.dll >> /home/codeforge/progress.txt
   echo "Install dependencies and build the project" >> /home/codeforge/progress.txt
   '
   gcloud compute instances create codeforge-vm --source-instance-template=$template_name --zone=us-central1-c
