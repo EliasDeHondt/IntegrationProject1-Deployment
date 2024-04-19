@@ -22,6 +22,7 @@ subnet_name=codeforge-subnet
 projectid="codeforge-$(date +%Y%m%d%H%M%S)" # projectid="codeforge-projectid"
 name_service_account="codeforge-service-account"
 instance_group_name=codeforge-instance-group
+bucket_name=codeforge-video-bucket
 
 
 # Functie: Error afhandeling.
@@ -244,12 +245,11 @@ function create_postgres_database() { # Step 7
 
 # Functie: Create a new GCloud Storage bucket if it doesn't already exist.
 function create_storage_bucket() { # Step 8
-  local BUCKET_NAME=codeforge-video-bucket
-  local EXISTING_BUCKET=$(gsutil ls | grep -o "gs://${BUCKET_NAME}/")
+  local EXISTING_BUCKET=$(gsutil ls | grep -o "gs://${bucket_name}/")
 
   if [ -z "$EXISTING_BUCKET" ]; then
     loading_icon 10 "* Step 8/$global_staps:" &
-    gcloud storage buckets create $BUCKET_NAME \
+    gcloud storage buckets create $bucket_name \
       --location=$region > ./Create-Infrastructure-IaC.log 2>&1
     wait
 
@@ -408,7 +408,6 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
     echo -n "* Step 14/$global_staps:"
     skip "Metadata already exists. Skipping setting."
   fi
-  
 }
 
 # Functie: Create a new instance template.
@@ -418,24 +417,32 @@ function create_instance_templates() { # Step 15
   local IMAGE_FAMILY=ubuntu-2004-lts
   local STARTUP_SCRIPT='
   #!/bin/bash
+  # Create a new user and add it to the sudo group and home directory and login using the user:
+  sudo useradd -m -s /bin/bash codeforge
+  echo "codeforge:123" | sudo chpasswd
+  sudo usermod -aG sudo codeforge
+  sudo su - codeforge
+  cd /home/codeforg
+  echo "Create a new user and add it to the sudo group and home directory and login using the user" >> /home/codeforge/progress.txt
+  
   # Update and install dependencies:
-  cd /home/ubuntu
   wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-  sudo dpkg -i packages-microsoft-prod.deb
-  sudo apt-get update -y
-  sudo apt-get upgrade -y
-  sudo apt-get install -yq wget git apt-transport-https dotnet-sdk-7.0
+  dpkg -i packages-microsoft-prod.deb
+  apt-get update -y && apt-get upgrade -y
+  apt-get install -yq git apt-transport-https dotnet-sdk-7.0
   wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
   . ~/.nvm/nvm.sh && nvm install 20.11.1
-
-  # Add SSH key & clone the repository from GitLab:
+  echo "Update and install dependencies" >> /home/codeforge/progress.txt
+  
+# Add SSH key & clone the repository from GitLab:
   mkdir ~/.ssh
-  SSH_PRIVATE_KEY=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/ssh-private-key)
+  SSH_PRIVATE_KEY=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/SSH-keys-deployment" -H "Metadata-Flavor: Google")
   echo "$SSH_PRIVATE_KEY" >> ~/.ssh/id_ed25519
   chmod 700 ~/.ssh
   chmod 600 ~/.ssh/id_ed25519
   ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
   GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
+  echo "Add SSH key & clone the repository from GitLab" >> /home/codeforge/progress.txt
 
   # Install dependencies and build the project:
   cd development/MVC/ClientApp
@@ -445,7 +452,12 @@ function create_instance_templates() { # Step 15
   mkdir ~/app
   . ~/.nvm/nvm.sh && dotnet publish "MVC.csproj" -c Release -o ~/app
   . ~/.nvm/nvm.sh && dotnet ~/app/MVC.dll
+  echo "Install dependencies and build the project" >> /home/codeforge/progress.txt
   '
+  gcloud compute instances create codeforge-vm --source-instance-template=$template_name --zone=us-central1-c
+  gcloud compute instances delete codeforge-vm --zone=us-central1-c --quiet
+  gcloud compute instance-templates delete codeforge-template --quiet
+
 
   loading_icon 10 "* Stap 15/$global_staps:" &
   gcloud compute instance-templates create $template_name \
@@ -594,7 +606,6 @@ success_exit "Infrastructure created successfully."
 
 # gcloud compute instances create codeforge-vm --source-instance-template=$template_name --zone=us-central1-c
 
-# gcloud compute instances stop codeforge-vm --zone=us-central1-c
 # gcloud compute instances delete codeforge-vm --zone=us-central1-c --quiet
 
 # gcloud sql instances delete db1 --quiet
