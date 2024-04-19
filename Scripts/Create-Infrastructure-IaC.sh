@@ -384,7 +384,7 @@ function create_firewallrule() { # Step 13
 }
 
 function set_metadata() { # Step 14
-  local METADATA_KEY="SSH-keys-deployment"
+  local METADATA_KEY="SSH-key-deployment"
   local METADATA_VALUE="-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
 QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
@@ -417,42 +417,46 @@ function create_instance_templates() { # Step 15
   local IMAGE_FAMILY=ubuntu-2004-lts
   local STARTUP_SCRIPT='
   #!/bin/bash
-  # Create a new user and add it to the sudo group and home directory and login using the user:
-  sudo useradd -m -s /bin/bash codeforge
-  echo "codeforge:123" | sudo chpasswd
-  sudo usermod -aG sudo codeforge
-  sudo su - codeforge
-  cd /home/codeforge
-  
-  
-  # Update and install dependencies:
-  sudo wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O /home/codeforge/packages-microsoft-prod.deb 
-  sudo dpkg -i /home/codeforge/packages-microsoft-prod.deb
-  sudo apt-get update -y && sudo apt-get upgrade -y
-  sudo apt-get install -yq git apt-transport-https dotnet-sdk-7.0
-  
-  
-  # Add SSH key & clone the repository from GitLab:
-  mkdir /home/codeforge/.ssh
-  SSH_PRIVATE_KEY=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/SSH-keys-deployment" -H "Metadata-Flavor: Google")
-  sudo echo "$SSH_PRIVATE_KEY" >> /home/codeforge/.ssh/id_ed25519
-  sudo chmod 700 /home/codeforge/.ssh
-  sudo chmod 600 /home/codeforge/.ssh/id_ed25519
-  ssh-keyscan gitlab.com >> /home/codeforge/.ssh/known_hosts
-  GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
-  
+  # Retrieve SSH private key and store it in /root/.ssh/id_ed25519
+  mkdir -p /root/.ssh
+  SSH_PRIVATE_KEY=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/SSH-key-deployment" -H "Metadata-Flavor: Google")
+  echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519
+  chmod 600 /root/.ssh/id_ed25519
+  ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
 
-  # Install dependencies and build the project:
-  sudo wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh -d /home/codeforge | bash
-  . /home/codeforge/.nvm/nvm.sh && nvm install 20.11.1
-  cd /home/codeforge/development/MVC/ClientApp
-  . /home/codeforge/.nvm/nvm.sh && npm rebuild && npm install && npm run build
+  # Install Microsoft package and update system
+  sudo apt-get update
+  sudo apt-get install -y wget apt-transport-https
+  wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
+  sudo dpkg -i /tmp/packages-microsoft-prod.deb
+  sudo apt-get update && sudo apt-get upgrade -y
+  sudo apt-get install -y git dotnet-sdk-7.0
+  sudo rm /tmp/packages-microsoft-prod.deb
+
+  # Clone the GitLab repo as root
+  cd /root
+  GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
+
+  # Install nvm and use Node.js 20.11.1
+  wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
+  export NVM_DIR="/root/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  . /root/.nvm/nvm.sh && nvm install 20.11.1
+
+  # Navigate to the correct directory and run npm commands
+  cd /root/development/MVC/ClientApp
+  . /root/.nvm/nvm.sh && npm rebuild
+  . /root/.nvm/nvm.sh && npm install
+  . /root/.nvm/nvm.sh && npm run build
+
+  # Navigate to parent directory and build the .NET application
+  cd /root/development/MVC
   dotnet build
-  mkdir /home/codeforge/app
-  dotnet publish "MVC.csproj" -c Release -o /home/codeforge/app
-  dotnet /home/codeforge/app/MVC.dll 2>> /home/codeforge/progress.txt
+  dotnet publish -c Release -o /root/app
+  dotnet /root/app/MVC.dll
   '
   gcloud compute instances create codeforge-vm --source-instance-template=$template_name --zone=us-central1-c
+  while true; do gcloud compute instances get-serial-port-output codeforge-vm --zone=us-central1-c; sleep 5; done
   gcloud compute instances delete codeforge-vm --zone=us-central1-c --quiet
   gcloud compute instance-templates delete codeforge-template --quiet
 
