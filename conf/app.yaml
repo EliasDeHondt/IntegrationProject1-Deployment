@@ -19,5 +19,5 @@ env_variables:
   ASPNETCORE_POSTGRES_DATABASE: 'codeforge'
   ASPNETCORE_POSTGRES_USER: 'admin'
   ASPNETCORE_POSTGRES_PASSWORD: '123'
-  GOOGLE_APPLICATION_CREDENTIALS: 'service-account-key.json'
   BUCKET_NAME_VIDEO: 'codeforge-video-bucket'
+  GOOGLE_APPLICATION_CREDENTIALS: 'service-account-key.json'

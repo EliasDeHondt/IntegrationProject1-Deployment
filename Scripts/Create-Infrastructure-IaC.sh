@@ -368,7 +368,7 @@ function create_firewallrule() { # Step 13
     loading_icon 10 "* Step 13/$global_staps:" &
     gcloud compute firewall-rules create $FIREWALL_RULE_NAME \
       --network=$network_name \
-      --allow=tcp:80,tcp:443,tcp:22 \
+      --allow=tcp:80,tcp:443 \
       --source-ranges=0.0.0.0/0 > ./Create-Infrastructure-IaC.log 2>&1
     wait
 
@@ -383,30 +383,50 @@ function create_firewallrule() { # Step 13
   fi
 }
 
+# Functie: Set the metadata if it doesn't already exist.
 function set_metadata() { # Step 14
-  local METADATA_KEY="SSH-key-deployment"
-  local METADATA_VALUE="-----BEGIN OPENSSH PRIVATE KEY-----
+   METADATA_KEY1="SSH-key-deployment"
+   METADATA_VALUE1="-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
 QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
 WQAAAAtzc2gtZWQyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SA
 AAAEB+ENgDO216QrnGM/RC0il4n7Nx00qCQxwA09vo8seZ7afXZBOZmLtc972tVmbuD0jl
 vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
 -----END OPENSSH PRIVATE KEY-----"
-  local EXISTING_METADATA=$(gcloud compute project-info describe --format="value(commonInstanceMetadata.items[0].key)" | grep -o "^$METADATA_KEY")
+   METADATA_KEY2="ASPNETCORE_ENVIRONMENT"
+   METADATA_VALUE2="Production"
+   METADATA_KEY3="ASPNETCORE_POSTGRES_HOST"
+   METADATA_VALUE3=$(gcloud sql instances describe db1 --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
+   METADATA_KEY4="ASPNETCORE_POSTGRES_PORT"
+   METADATA_VALUE4="5432"
+   METADATA_KEY5="ASPNETCORE_POSTGRES_DATABASE"
+   METADATA_VALUE5="codeforge"
+   METADATA_KEY6="ASPNETCORE_POSTGRES_USER"
+   METADATA_VALUE6="admin"
+   METADATA_KEY7="ASPNETCORE_POSTGRES_PASSWORD"
+   METADATA_VALUE7="123"
+   METADATA_KEY8="ASPNETCORE_STORAGE_BUCKET"
+   METADATA_VALUE8="codeforge-video-bucket"
+   METADATA_KEY9="GOOGLE_APPLICATION_CREDENTIALS"
+   METADATA_VALUE9="service-account-key.json"
 
-  if [ -z "$EXISTING_METADATA" ]; then
-    loading_icon 10 "* Step 14/$global_staps:" &
-    gcloud compute project-info add-metadata --metadata=$METADATA_KEY="$METADATA_VALUE" > ./Create-Infrastructure-IaC.log 2>&1
-    wait
+  loading_icon 10 "* Step 14/$global_staps:" &
+  gcloud compute project-info add-metadata \
+    --metadata="SSH-key-deployment=$METADATA_VALUE1,\
+ASPNETCORE_ENVIRONMENT=$METADATA_VALUE2,\
+ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE3,\
+ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE4,\
+ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE5,\
+ASPNETCORE_POSTGRES_USER=$METADATA_VALUE6,\
+ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE7,\
+ASPNETCORE_STORAGE_BUCKET=$METADATA_VALUE8,\
+GOOGLE_APPLICATION_CREDENTIALS=$METADATA_VALUE9" > ./Create-Infrastructure-IaC.log 2>&1
+  wait
 
-    if [ $? -eq 0 ]; then
-      success "Metadata set successfully."
-    else
-      error_exit "Failed to set the metadata."
-    fi
+  if [ $? -eq 0 ]; then
+    success "Metadata set successfully."
   else
-    echo -n "* Step 14/$global_staps:"
-    skip "Metadata already exists. Skipping setting."
+    error_exit "Failed to set the metadata."
   fi
 }
 
@@ -417,14 +437,22 @@ function create_instance_templates() { # Step 15
   local IMAGE_FAMILY=ubuntu-2004-lts
   local STARTUP_SCRIPT='
   #!/bin/bash
-  # Retrieve SSH private key and store it in /root/.ssh/id_ed25519
+  ASPNETCORE_ENVIRONMENT=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/ASPNETCORE_ENVIRONMENT" -H "Metadata-Flavor: Google")
+  ASPNETCORE_POSTGRES_HOST=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/ASPNETCORE_POSTGRES_HOST" -H "Metadata-Flavor: Google")
+  ASPNETCORE_POSTGRES_PORT=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/ASPNETCORE_POSTGRES_PORT" -H "Metadata-Flavor: Google")
+  ASPNETCORE_POSTGRES_DATABASE=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/ASPNETCORE_POSTGRES_DATABASE" -H "Metadata-Flavor: Google")
+  ASPNETCORE_POSTGRES_USER=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/ASPNETCORE_POSTGRES_USER" -H "Metadata-Flavor: Google")
+  ASPNETCORE_POSTGRES_PASSWORD=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/ASPNETCORE_POSTGRES_PASSWORD" -H "Metadata-Flavor: Google")
+  ASPNETCORE_STORAGE_BUCKET=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/ASPNETCORE_STORAGE_BUCKET" -H "Metadata-Flavor: Google")
+  GOOGLE_APPLICATION_CREDENTIALS=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/GOOGLE_APPLICATION_CREDENTIALS" -H "Metadata-Flavor: Google")
+
   mkdir -p /root/.ssh
   SSH_PRIVATE_KEY=$(curl -s "http://metadata.google.internal/computeMetadata/v1/project/attributes/SSH-key-deployment" -H "Metadata-Flavor: Google")
   echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519
   chmod 600 /root/.ssh/id_ed25519
   ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
+  echo "$SSH_PRIVATE_KEY" > /home/id_ed25519 # Test
 
-  # Install Microsoft package and update system
   sudo apt-get update
   sudo apt-get install -y wget apt-transport-https
   wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
@@ -433,33 +461,15 @@ function create_instance_templates() { # Step 15
   sudo apt-get install -y git dotnet-sdk-7.0
   sudo rm /tmp/packages-microsoft-prod.deb
 
-  # Clone the GitLab repo as root
   cd /root
   GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
 
-  # Install nvm and use Node.js 20.11.1
   wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
-  export NVM_DIR="/root/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  . /root/.nvm/nvm.sh && nvm install 20.11.1
+  . /.nvm/nvm.sh && nvm install 20.11.1
 
-  # Navigate to the correct directory and run npm commands
-  cd /root/development/MVC/ClientApp
-  . /root/.nvm/nvm.sh && npm rebuild
-  . /root/.nvm/nvm.sh && npm install
-  . /root/.nvm/nvm.sh && npm run build
-
-  # Navigate to parent directory and build the .NET application
-  cd /root/development/MVC
-  dotnet build
-  dotnet publish -c Release -o /root/app
-  dotnet /root/app/MVC.dll
+  cd /root/development/MVC/ClientApp && . /.nvm/nvm.sh && npm rebuild && npm install && npm run build
+  cd /root/development/MVC && dotnet publish -c Release -o /root/app && dotnet /root/app/MVC.dll
   '
-  gcloud compute instances create codeforge-vm --source-instance-template=$template_name --zone=us-central1-c
-  while true; do gcloud compute instances get-serial-port-output codeforge-vm --zone=us-central1-c; sleep 5; done
-  gcloud compute instances delete codeforge-vm --zone=us-central1-c --quiet
-  gcloud compute instance-templates delete codeforge-template --quiet
-
 
   loading_icon 10 "* Stap 15/$global_staps:" &
   gcloud compute instance-templates create $template_name \
@@ -607,6 +617,7 @@ success_exit "Infrastructure created successfully."
 
 
 # gcloud compute instances create codeforge-vm --source-instance-template=$template_name --zone=us-central1-c
+# while true; do gcloud compute instances get-serial-port-output codeforge-vm --zone=us-central1-c; sleep 5; done
 
 # gcloud compute instances delete codeforge-vm --zone=us-central1-c --quiet
 
