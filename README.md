@@ -34,8 +34,7 @@ Please also see following documents:
     - [x] Project Context
         - [x] [Project Context](/Documentation/Deployment-Analyze-and-Architecture.md#📑context)
 - [x] Infra deploy automation: `Bash scripts`
-    - [x] [Create Infrastructure Script (IaC)](/Scripts/Create-Infrastructure-IaC.sh)
-    - [x] [Delete Infrastructure Script (IaC)](/Scripts/Delete-Infrastructure-IaC.sh)
+    - [x] [Deployment Script IaC](/Scripts/Deployment-Script-IaC.sh)
 - [x] Instructions for deployment
     - [x] [Instructions GCloud](/Documentation/Instructions-GCloud.md)
     - [x] [Instructions MVP Deployment](/Documentation/Instructions-MVP-Deployment.md)
@@ -51,8 +50,6 @@ Please also see following documents:
 ```bash
 ssh-keygen -t ed25519 -C "elias.dehondt@student.kdg.be"
 # /home/elias/id_rsa
-# Passphrase: _
-# Passphrase: _
 # cat /home/elias/id_rsa
 # cat /home/elias/id_rsa.pub
 # Add ssh key to ssh-agent
@@ -62,4 +59,4 @@ ssh-add /home/elias/id_rsa
 
 ## 🔗Links
 - 👯 Web hosting company [EliasDH.com](https://eliasdh.com).
-- 📫 How to reach us eliasdehondt@outlook.com.
+- 📫 How to reach us elias.dehondt@outlook.com.

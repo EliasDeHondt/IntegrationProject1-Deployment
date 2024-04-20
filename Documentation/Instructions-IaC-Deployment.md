@@ -8,37 +8,18 @@
 3. [✨Steps](#✨steps)
     1. [👉Step 0: Preparations](#👉step-0-preparations)
     2. [👉Step 1: Configure Environment](#👉step-1-configure-environment)
-4. [📦Extra](#📦extra)
-5. [🔗Links](#🔗links)
+4. [🔗Links](#🔗links)
 
 ---
 
 ## 🖖Introduction
 
-This document will guide you through the process of deploying the entire infrastructure of the CodeForge application to the Google Cloud Platform. The infrastructure is deployed using Infrastructure as Code [Create Script](/Scripts/Create-Infrastructure-IaC.sh) and [Delete Script](/Scripts/Delete-Infrastructure-IaC.sh). The infrastructure consists of a PostgreSQL database, custom domains, metadata server, VM instances, and load balancers. The infrastructure is deployed using the Google Cloud CLI.
+This document will guide you through the process of deploying the entire infrastructure of the CodeForge application to the Google Cloud Platform. The infrastructure is deployed using Infrastructure as Code [Deployment Script IaC](/Scripts/Deployment-Script-IaC.sh).
 
 ## ✨Steps
 
 ### 👉Step 0: Preparations
 
-- Update and upgrade system
-    ```bash	
-    sudo apt-get update && sudo apt-get upgrade -y
-    ```
-- Install the .NET SDK 7.0 or later.
-    ```bash
-    sudo apt-get install dotnet-sdk-7.0
-    dotnet --version # Check if the installation was successful
-    ```
-- Insall nodejs and npm
-    ```bash	
-    sudo apt-get install wget
-    wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
-    source ~/.profile
-    nvm install 20.11.1
-    node --version
-    npm --version
-    ```
 - Insall the Google Cloud CLI [Instructions GCloud CLI](https://github.com/EliasDeHondt/IntegrationProject1-Deployment/blob/main/Documentation/Instructions-GCloud-CLI.md)
 
 ### 👉Step 1: Configure Environment
@@ -61,20 +42,12 @@ This document will guide you through the process of deploying the entire infrast
     ```bash
     cd IntegrationProject1-Deployment/Scripts
     ```
-- Run the [Create Infrastructure IaC Script](/Scripts/Create-Infrastructure-IaC.sh)
+- Run the [Create Infrastructure IaC Script](/Scripts/Deployment-Script-IaC.sh.sh)
     ```bash
-    chmod +x Create-Infrastructure-IaC.sh
-    sudo ./Create-Infrastructure-IaC.sh
+    chmod +x Deployment-Script-IaC.sh
+    sudo ./Deployment-Script-IaC.sh
     ```
 > ***The script will do the rest!***
-
-## 📦Extra
-
-- Delete the infrastructure using the [Delete Infrastructure IaC Script](/Scripts/Delete-Infrastructure-IaC.sh)
-    ```bash
-    chmod +x Delete-Infrastructure-IaC.sh
-    sudo ./Delete-Infrastructure-IaC.sh
-    ```
 
 ## 🔗Links
 - 👯 Web hosting company [EliasDH.com](https://eliasdh.com).
