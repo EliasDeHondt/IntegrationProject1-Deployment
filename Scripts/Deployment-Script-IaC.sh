@@ -204,7 +204,7 @@ function create_firewallrule() { # Step 7
     loading_icon 10 "* Step 7/$global_staps:" &
     gcloud compute firewall-rules create $FIREWALL_RULE_NAME \
       --network=$network_name \
-      --allow=tcp:80,tcp:443 \
+      --allow=tcp:5000,tcp:22 \
       --source-ranges=0.0.0.0/0 > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
     wait
@@ -484,7 +484,7 @@ function create_load_balancer() { # Step 17
 
   if [ -z "$EXISTING_LOAD_BALANCER" ]; then
     loading_icon 10 "* Step 17/$global_staps:" &
-    gcloud compute health-checks create http $HEALTH_CHECK_NAME --port=80 > ./deployment-script.log 2>&1
+    gcloud compute health-checks create http $HEALTH_CHECK_NAME --port=5000 > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
     gcloud compute backend-services create $BACKEND_SERVICE_NAME --protocol=HTTP --health-checks=$HEALTH_CHECK_NAME --global > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
@@ -494,7 +494,7 @@ function create_load_balancer() { # Step 17
     EXIT_CODE=$((EXIT_CODE + $?))
     gcloud compute target-http-proxies create $TARGET_PROXY_NAME --url-map=$URL_MAP_NAME > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
-    gcloud compute forwarding-rules create $FORWARDING_RULE_NAME --global --target-http-proxy=$TARGET_PROXY_NAME --ports=80 > ./deployment-script.log 2>&1
+    gcloud compute forwarding-rules create $FORWARDING_RULE_NAME --global --target-http-proxy=$TARGET_PROXY_NAME --ports=5000 > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
     wait
 
@@ -542,7 +542,6 @@ if [ "$choice" == "1" ]; then
     echo -n "* Enter the zone: "
     read zone
     if [ -z "$projectid" ] || [ -z "$region" ] || [ -z "$zone" ]; then error_exit "Please enter all the required variables."; fi
-  fi
   elif [ "$configure" == "n" ]; then
     echo -e "*"
     echo -n "* Using the default variables."
