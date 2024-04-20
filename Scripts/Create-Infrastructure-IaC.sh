@@ -385,34 +385,25 @@ function create_firewallrule() { # Step 13
 
 # Functie: Set the metadata if it doesn't already exist.
 function set_metadata() { # Step 14
-   METADATA_KEY1="SSH-key-deployment"
-   METADATA_VALUE1="-----BEGIN OPENSSH PRIVATE KEY-----
+  local METADATA_VALUE1="-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
 QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
 WQAAAAtzc2gtZWQyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SA
 AAAEB+ENgDO216QrnGM/RC0il4n7Nx00qCQxwA09vo8seZ7afXZBOZmLtc972tVmbuD0jl
 vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
 -----END OPENSSH PRIVATE KEY-----"
-   METADATA_KEY2="ASPNETCORE_ENVIRONMENT"
-   METADATA_VALUE2="Production"
-   METADATA_KEY3="ASPNETCORE_POSTGRES_HOST"
-   METADATA_VALUE3=$(gcloud sql instances describe db1 --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
-   METADATA_KEY4="ASPNETCORE_POSTGRES_PORT"
-   METADATA_VALUE4="5432"
-   METADATA_KEY5="ASPNETCORE_POSTGRES_DATABASE"
-   METADATA_VALUE5="codeforge"
-   METADATA_KEY6="ASPNETCORE_POSTGRES_USER"
-   METADATA_VALUE6="admin"
-   METADATA_KEY7="ASPNETCORE_POSTGRES_PASSWORD"
-   METADATA_VALUE7="123"
-   METADATA_KEY8="ASPNETCORE_STORAGE_BUCKET"
-   METADATA_VALUE8="codeforge-video-bucket"
-   METADATA_KEY9="GOOGLE_APPLICATION_CREDENTIALS"
-   METADATA_VALUE9="service-account-key.json"
+  local METADATA_VALUE2="Production"
+  local METADATA_VALUE3=$(gcloud sql instances describe db1 --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
+  local METADATA_VALUE4="5432"
+  local METADATA_VALUE5="codeforge"
+  local METADATA_VALUE6="admin"
+  local METADATA_VALUE7="123"
+  local METADATA_VALUE8="codeforge-video-bucket"
+  local METADATA_VALUE9="service-account-key.json"
 
   loading_icon 10 "* Step 14/$global_staps:" &
-  gcloud compute project-info add-metadata \
-    --metadata="SSH-key-deployment=$METADATA_VALUE1,\
+  gcloud compute project-info add-metadata --metadata="\
+SSH-key-deployment=$METADATA_VALUE1,\
 ASPNETCORE_ENVIRONMENT=$METADATA_VALUE2,\
 ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE3,\
 ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE4,\
@@ -430,7 +421,7 @@ GOOGLE_APPLICATION_CREDENTIALS=$METADATA_VALUE9" > ./Create-Infrastructure-IaC.l
   fi
 }
 
-# Functie: Create a new instance template.
+# Functie: Create a new instance template if it doesn't already exist.
 function create_instance_templates() { # Step 15
   local MACHINE_TYPE=n1-standard-4
   local IMAGE_PROJECT=ubuntu-os-cloud
@@ -455,10 +446,9 @@ function create_instance_templates() { # Step 15
   sudo apt-get update
   sudo apt-get install -y wget apt-transport-https
   wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
-  sudo dpkg -i /tmp/packages-microsoft-prod.deb
+  sudo dpkg -i /tmp/packages-microsoft-prod.deb && sudo rm /tmp/packages-microsoft-prod.deb
   sudo apt-get update && sudo apt-get upgrade -y
   sudo apt-get install -y git dotnet-sdk-7.0
-  sudo rm /tmp/packages-microsoft-prod.deb
 
   cd /root
   GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
@@ -470,19 +460,26 @@ function create_instance_templates() { # Step 15
   cd /root/development/MVC && dotnet publish -c Release -o /root/app && dotnet /root/app/MVC.dll
   '
 
-  loading_icon 10 "* Stap 15/$global_staps:" &
-  gcloud compute instance-templates create $template_name \
-    --machine-type=$MACHINE_TYPE \
-    --image-project=$IMAGE_PROJECT \
-    --image-family=$IMAGE_FAMILY \
-    --subnet=projects/$projectid/regions/$region/subnetworks/$subnet_name \
-    --metadata=startup-script="$STARTUP_SCRIPT" > ./Create-Infrastructure-IaC.log 2>&1
-  wait
+  local EXISTING_TEMPLATE=$(gcloud compute instance-templates list --format="value(NAME)" | grep -o "^$template_name")
 
-  if [ $? -eq 0 ]; then
-    success "Instance template created successfully."
+  if [ -z "$EXISTING_TEMPLATE" ]; then
+    loading_icon 10 "* Stap 15/$global_staps:" &
+    gcloud compute instance-templates create $template_name \
+      --machine-type=$MACHINE_TYPE \
+      --image-project=$IMAGE_PROJECT \
+      --image-family=$IMAGE_FAMILY \
+      --subnet=projects/$projectid/regions/$region/subnetworks/$subnet_name \
+      --metadata=startup-script="$STARTUP_SCRIPT" > ./Create-Infrastructure-IaC.log 2>&1
+    wait
+
+    if [ $? -eq 0 ]; then
+      success "Instance template created successfully."
+    else
+      error_exit "Failed to create the instance template."
+    fi
   else
-    error_exit "Failed to create the instance template."
+    echo -n "* Step 15/$global_staps:"
+    skip "Instance template already exists. Skipping creation."
   fi
 }
 
