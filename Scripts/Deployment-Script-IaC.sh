@@ -4,7 +4,7 @@
 # @see https://eliasdh.com #
 # @since 01/03/2024        #
 ############################
-# FUNCTIE: This is de script to create the GCloud infrastructure.
+# FUNCTIE: This script is used to deploy the infrastructure for the CodeForge project. Or delete the infrastructure.
 reset='\e[0m'
 rood='\e[0;31m'
 blauw='\e[0;34m'
@@ -388,14 +388,14 @@ function create_instance_templates() { # Step 15
   #!/bin/bash
   URL="http://metadata.google.internal/computeMetadata/v1/project/attributes"
   SSH_PRIVATE_KEY=$(curl -s "$URL/SSH-key-deployment" -H "Metadata-Flavor: Google")
-  ASPNETCORE_ENVIRONMENT=$(curl -s "$URL/ASPNETCORE_ENVIRONMENT" -H "Metadata-Flavor: Google")
-  ASPNETCORE_POSTGRES_HOST=$(curl -s "$URL/ASPNETCORE_POSTGRES_HOST" -H "Metadata-Flavor: Google")
-  ASPNETCORE_POSTGRES_PORT=$(curl -s "$URL/ASPNETCORE_POSTGRES_PORT" -H "Metadata-Flavor: Google")
-  ASPNETCORE_POSTGRES_DATABASE=$(curl -s "$URL/ASPNETCORE_POSTGRES_DATABASE" -H "Metadata-Flavor: Google")
-  ASPNETCORE_POSTGRES_USER=$(curl -s "$URL/ASPNETCORE_POSTGRES_USER" -H "Metadata-Flavor: Google")
-  ASPNETCORE_POSTGRES_PASSWORD=$(curl -s "$URL/ASPNETCORE_POSTGRES_PASSWORD" -H "Metadata-Flavor: Google")
-  ASPNETCORE_STORAGE_BUCKET=$(curl -s "$URL/ASPNETCORE_STORAGE_BUCKET" -H "Metadata-Flavor: Google")
-  GOOGLE_APPLICATION_CREDENTIALS=$(curl -s "$URL/GOOGLE_APPLICATION_CREDENTIALS" -H "Metadata-Flavor: Google")
+  export ASPNETCORE_ENVIRONMENT=$(curl -s "$URL/ASPNETCORE_ENVIRONMENT" -H "Metadata-Flavor: Google")
+  export ASPNETCORE_POSTGRES_HOST=$(curl -s "$URL/ASPNETCORE_POSTGRES_HOST" -H "Metadata-Flavor: Google")
+  export ASPNETCORE_POSTGRES_PORT=$(curl -s "$URL/ASPNETCORE_POSTGRES_PORT" -H "Metadata-Flavor: Google")
+  export ASPNETCORE_POSTGRES_DATABASE=$(curl -s "$URL/ASPNETCORE_POSTGRES_DATABASE" -H "Metadata-Flavor: Google")
+  export ASPNETCORE_POSTGRES_USER=$(curl -s "$URL/ASPNETCORE_POSTGRES_USER" -H "Metadata-Flavor: Google")
+  export ASPNETCORE_POSTGRES_PASSWORD=$(curl -s "$URL/ASPNETCORE_POSTGRES_PASSWORD" -H "Metadata-Flavor: Google")
+  export ASPNETCORE_STORAGE_BUCKET=$(curl -s "$URL/ASPNETCORE_STORAGE_BUCKET" -H "Metadata-Flavor: Google")
+  export GOOGLE_APPLICATION_CREDENTIALS=$(curl -s "$URL/GOOGLE_APPLICATION_CREDENTIALS" -H "Metadata-Flavor: Google")
 
   mkdir -p /root/.ssh
   echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519
@@ -529,6 +529,26 @@ echo -e "* [1] Create the infrastructure\n* [2] Delete the infrastructure"
 read -p "* Enter the number of your choice: " choice
 echo -e "*"
 if [ "$choice" == "1" ]; then
+  welcome_message
+  echo -e "*"
+  # Stel een vraag aan de user dat hij volgende variabelen wilt configureren of de default wilt gebruik. (EN) projectid, region, zone
+  read -p "* Do you want to override the default variables? (Y/n): " configure
+  if [ "$configure" == "Y" ] || [ "$configure" == "y" ] || [ -z "$configure" ]; then
+    echo -e "*"
+    echo -n "* Enter the project id: "
+    read projectid
+    echo -n "* Enter the region: "
+    read region
+    echo -n "* Enter the zone: "
+    read zone
+    if [ -z "$projectid" ] || [ -z "$region" ] || [ -z "$zone" ]; then error_exit "Please enter all the required variables."; fi
+  fi
+  elif [ "$configure" == "n" ]; then
+    echo -e "*"
+    echo -n "* Using the default variables."
+  else
+    error_exit "Invalid choice."
+  fi
   welcome_message
   echo -e "*"
   create_project          # Step 1
