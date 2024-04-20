@@ -21,8 +21,9 @@ template_name=codeforge-template
 network_name=codeforge-network
 subnet_name=codeforge-subnet
 name_service_account="codeforge-service-account"
+json_key_file=codeforge-service-account-key.json
 instance_group_name=codeforge-instance-group
-bucket_name=codeforge-video-bucket
+bucket_name=gs://codeforge-video-bucket-$(date +%Y%m%d%H%M%S)/
 
 
 # Functie: Error afhandeling.
@@ -212,7 +213,7 @@ function create_network_subnet() { # Step 6
       --range=10.0.0.0/24 \
       --enable-private-ip-google-access > ./deployment-script.log 2>&1
     wait
-  
+
   if [ $? -eq 0 ]; then
     success "Subnet created successfully."
   else
@@ -331,7 +332,7 @@ function create_postgres_database() { # Step 10
 
 # Functie: Create a new GCloud Storage bucket if it doesn't already exist.
 function create_storage_bucket() { # Step 11
-  local EXISTING_BUCKET=$(gsutil ls | grep -o "gs://${bucket_name}/")
+  local EXISTING_BUCKET=$(gsutil ls | grep -o "${bucket_name}")
 
   if [ -z "$EXISTING_BUCKET" ]; then
     loading_icon 10 "* Step 11/$global_staps:" &
@@ -418,8 +419,6 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
   local METADATA_VALUE5="codeforge"
   local METADATA_VALUE6="admin"
   local METADATA_VALUE7="123"
-  local METADATA_VALUE8="codeforge-video-bucket"
-  local METADATA_VALUE9="service-account-key.json"
 
   loading_icon 10 "* Step 14/$global_staps:" &
   gcloud compute project-info add-metadata --metadata="\
@@ -430,8 +429,8 @@ ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE4,\
 ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE5,\
 ASPNETCORE_POSTGRES_USER=$METADATA_VALUE6,\
 ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE7,\
-ASPNETCORE_STORAGE_BUCKET=$METADATA_VALUE8,\
-GOOGLE_APPLICATION_CREDENTIALS=$METADATA_VALUE9" > ./deployment-script.log 2>&1
+ASPNETCORE_STORAGE_BUCKET=$bucket_name,\
+GOOGLE_APPLICATION_CREDENTIALS=$json_key_file" > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
   wait
 
@@ -449,38 +448,15 @@ function create_instance_templates() { # Step 15
   local IMAGE_FAMILY=ubuntu-2004-lts
   local STARTUP_SCRIPT='
   #!/bin/bash
-  URL="http://metadata.google.internal/computeMetadata/v1/project/attributes"
-  SSH_PRIVATE_KEY=$(curl -s "$URL/SSH-key-deployment" -H "Metadata-Flavor: Google")
-  ASPNETCORE_ENVIRONMENT=$(curl -s "$URL/ASPNETCORE_ENVIRONMENT" -H "Metadata-Flavor: Google")
-  ASPNETCORE_POSTGRES_HOST=$(curl -s "$URL/ASPNETCORE_POSTGRES_HOST" -H "Metadata-Flavor: Google")
-  ASPNETCORE_POSTGRES_PORT=$(curl -s "$URL/ASPNETCORE_POSTGRES_PORT" -H "Metadata-Flavor: Google")
-  ASPNETCORE_POSTGRES_DATABASE=$(curl -s "$URL/ASPNETCORE_POSTGRES_DATABASE" -H "Metadata-Flavor: Google")
-  ASPNETCORE_POSTGRES_USER=$(curl -s "$URL/ASPNETCORE_POSTGRES_USER" -H "Metadata-Flavor: Google")
-  ASPNETCORE_POSTGRES_PASSWORD=$(curl -s "$URL/ASPNETCORE_POSTGRES_PASSWORD" -H "Metadata-Flavor: Google")
-  ASPNETCORE_STORAGE_BUCKET=$(curl -s "$URL/ASPNETCORE_STORAGE_BUCKET" -H "Metadata-Flavor: Google")
-  GOOGLE_APPLICATION_CREDENTIALS=$(curl -s "$URL/GOOGLE_APPLICATION_CREDENTIALS" -H "Metadata-Flavor: Google")
 
-  mkdir -p /root/.ssh
-  echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519
-  chmod 600 /root/.ssh/id_ed25519
-  ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
+  sudo apt-get update && sudo apt-get install -y apache2
+  sudo systemctl start apache2
+  sudo systemctl enable apache2
 
-  sudo apt-get update && sudo apt-get install -y wget apt-transport-https
-  wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
-  sudo dpkg -i /tmp/packages-microsoft-prod.deb && sudo rm /tmp/packages-microsoft-prod.deb
-  sudo apt-get update && sudo apt-get upgrade -y
-  sudo apt-get install -y git dotnet-sdk-7.0
-
-  cd /root && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone --single-branch --branch MVP git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
-  # GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
-
-  wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
-  . /.nvm/nvm.sh && nvm install 20.11.1
-
-  export HOME=/root
-  cd /root/development/MVC/ClientApp && . /.nvm/nvm.sh && npm rebuild && npm install && npm run build
-  cd /root/development/MVC && dotnet publish /root/development/MVC/MVC.csproj -c Release -o /root/app && dotnet /root/app/MVC.dll
+  echo "Testpagina van Apache" | sudo tee /var/www/html/index.html > /dev/null
+  sudo chmod 644 /var/www/html/index.html
   '
+
   local EXISTING_TEMPLATE=$(gcloud compute instance-templates list --format="value(NAME)" | grep -o "^$template_name")
 
   if [ -z "$EXISTING_TEMPLATE" ]; then
@@ -590,7 +566,7 @@ function create_load_balancer() { # Step 17
   fi
 }
 
-# Functie: Delete the project.
+# Functie: Delete the project if it exists.
 function delete_project() {
   local EXISTING_PROJECTS=$(gcloud projects list 2>/dev/null | grep -o "^$Projectid")
 
@@ -616,7 +592,7 @@ touch ./deployment-script.log
 
 # Ask the user what they want to do. Do they want to create the infrastructure or delete?
 echo -e "*"
-echo -e "* 1) Create the infrastructure\n* 2) Delete the infrastructure"
+echo -e "* [1] Create the infrastructure\n* [2] Delete the infrastructure"
 read -p "* Enter the number of your choice: " choice
 echo -e "*"
 if [ "$choice" == "1" ]; then
