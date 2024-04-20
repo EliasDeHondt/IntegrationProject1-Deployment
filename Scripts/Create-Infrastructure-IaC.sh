@@ -451,7 +451,6 @@ function create_instance_templates() { # Step 15
   echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519
   chmod 600 /root/.ssh/id_ed25519
   ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
-  echo "$SSH_PRIVATE_KEY" > /home/id_ed25519 # Test
 
   sudo apt-get update
   sudo apt-get install -y wget apt-transport-https
