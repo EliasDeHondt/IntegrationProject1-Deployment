@@ -85,4 +85,4 @@ gcloud compute instances delete codeforge-vm --zone=us-central1-c --quiet
 gcloud compute instance-templates delete codeforge-template --quiet
 
 # Get public IP of load balancer
-gcloud compute forwarding-rules list # http://34.36.223.147/
+gcloud compute forwarding-rules list

@@ -60,15 +60,9 @@ function welcome_message() {
 
 # Functie: Bash validatie.
 function bash_validation() {
-  if [ -z "$BASH_VERSION" ]; then
-    error_exit "This script must be run using Bash."
-  fi
-
+  if [ -z "$BASH_VERSION" ]; then error_exit "This script must be run using Bash."; fi
   [ "$EUID" -ne 0 ] && error_exit "Script must be run as root: sudo $0"
-
-  if ! command -v gcloud &> /dev/null; then
-    error_exit "Google Cloud CLI is not installed. Please install it before running this script."
-  fi
+  if ! command -v gcloud &> /dev/null; then error_exit "Google Cloud CLI is not installed. Please install it before running this script."; fi
 }
 
 # Functie: Print the loading icon.
@@ -101,11 +95,7 @@ function create_project() { # Step 1
     local EXIT_CODE=$?
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Project created successfully."
-    else
-      error_exit "Failed to create the project."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Project created successfully."; else error_exit "Failed to create the project."; fi
   else
     echo -n "* Stap 1/$global_staps:"
     skip "Project already exists. Skipping creation."
@@ -122,11 +112,7 @@ function set_project() { # Step 2
     local EXIT_CODE=$?
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Project set successfully."
-    else
-      error_exit "Failed to set the project."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Project set successfully."; else error_exit "Failed to set the project."; fi
   else
     echo -n "* Step 2/$global_staps:"
     skip "Project is already set to $projectid. Skipping setting."
@@ -145,11 +131,7 @@ function link_billing_account() { # Step 3
     local EXIT_CODE=$?
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Billing account linked successfully."
-    else
-      error_exit "Failed to link the billing account."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Billing account linked successfully."; else error_exit "Failed to link the billing account."; fi
   else
     echo -n "* Step 3/$global_staps:"
     skip "Project is already linked to a billing account. Skipping linking."
@@ -171,11 +153,7 @@ function enable_apis() { # Step 4
   EXIT_CODE=$((EXIT_CODE + $?))
   wait
 
-  if [ $EXIT_CODE -eq 0 ]; then
-    success "APIs enabled successfully."
-  else
-    error_exit "Failed to enable the APIs."
-  fi
+  if [ $EXIT_CODE -eq 0 ]; then success "APIs enabled successfully."; else error_exit "Failed to enable the APIs."; fi
 }
 
 # Functie: Create a new network if it doesn't already exist.
@@ -190,11 +168,7 @@ function create_network() { # Step 5
     local EXIT_CODE=$?
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Network created successfully."
-    else
-      error_exit "Failed to create the network."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Network created successfully."; else error_exit "Failed to create the network."; fi
   else
     echo -n "* Step 5/$global_staps:"
     skip "Network already exists. Skipping creation."
@@ -214,11 +188,7 @@ function create_network_subnet() { # Step 6
       --enable-private-ip-google-access > ./deployment-script.log 2>&1
     wait
 
-  if [ $? -eq 0 ]; then
-    success "Subnet created successfully."
-  else
-    error_exit "Failed to create the subnet."
-  fi
+  if [ $? -eq 0 ]; then success "Subnet created successfully.";  else error_exit "Failed to create the subnet."; fi
   else
     echo -n "* Step 6/$global_staps:"
     skip "Subnet already exists. Skipping creation."
@@ -239,11 +209,7 @@ function create_firewallrule() { # Step 7
     local EXIT_CODE=$?
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Firewall rule created successfully."
-    else
-      error_exit "Failed to create the firewall rule."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Firewall rule created successfully."; else error_exit "Failed to create the firewall rule."; fi
   else
     echo -n "* Step 7/$global_staps:"
     skip "Firewall rule already exists. Skipping creation."
@@ -267,11 +233,7 @@ function create_postgres_instance() { # Step 8
     local EXIT_CODE=$?
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Cloud SQL instance created successfully."
-    else
-      error_exit "Failed to create the Cloud SQL instance."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Cloud SQL instance created successfully."; else error_exit "Failed to create the Cloud SQL instance."; fi
   else
     echo -n "* Stap 8/$global_staps:"
     skip "Cloud SQL instance already exists. Skipping creation."
@@ -295,11 +257,7 @@ function create_postgres_user() { # Step 9
     EXIT_CODE=$((EXIT_CODE + $?))
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Cloud SQL user created successfully."
-    else
-      error_exit "Failed to create the Cloud SQL user."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Cloud SQL user created successfully."; else error_exit "Failed to create the Cloud SQL user."; fi
   else
     echo -n "* Stap 9/$global_staps:"
     skip "Cloud SQL user already exists. Skipping creation."
@@ -319,11 +277,7 @@ function create_postgres_database() { # Step 10
     local EXIT_CODE=$?
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Cloud SQL database created successfully."
-    else
-      error_exit "Failed to create the Cloud SQL database."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Cloud SQL database created successfully."; else error_exit "Failed to create the Cloud SQL database."; fi
   else
     echo -n "* Stap 10/$global_staps:"
     skip "Cloud SQL database already exists. Skipping creation."
@@ -341,11 +295,7 @@ function create_storage_bucket() { # Step 11
     local EXIT_CODE=$?
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Cloud Storage bucket created successfully."
-    else
-      error_exit "Failed to create the Cloud Storage bucket."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Cloud Storage bucket created successfully."; else error_exit "Failed to create the Cloud Storage bucket."; fi
   else
     echo -n "* Step 11/$global_staps:"
     skip "Cloud Storage bucket already exists. Skipping creation."
@@ -364,11 +314,7 @@ function create_service_account() { # Step 12
     local EXIT_CODE=$?
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Service account created successfully."
-    else
-      error_exit "Failed to create the service account."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Service account created successfully."; else error_exit "Failed to create the service account."; fi
   else
     echo -n "* Step 12/$global_staps:"
     skip "Service account already exists. Skipping creation."
@@ -389,11 +335,7 @@ function add_permissions_to_service_account() { # Step 13
     local EXIT_CODE=$?
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Permissions added to the service account successfully."
-    else
-      error_exit "Failed to add permissions to the service account."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Permissions added to the service account successfully."; else error_exit "Failed to add permissions to the service account."; fi
   else
     echo -n "* Step 13/$global_staps:"
     skip "Permissions for the service account already exist. Skipping addition."
@@ -434,27 +376,47 @@ GOOGLE_APPLICATION_CREDENTIALS=$json_key_file" > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
   wait
 
-  if [ $EXIT_CODE -eq 0 ]; then
-    success "Metadata set successfully."
-  else
-    error_exit "Failed to set the metadata."
-  fi
+  if [ $EXIT_CODE -eq 0 ]; then success "Metadata set successfully."; else error_exit "Failed to set the metadata."; fi
 }
 
 # Functie: Create a new instance template if it doesn't already exist.
 function create_instance_templates() { # Step 15
-  local MACHINE_TYPE=n1-standard-4
+  local MACHINE_TYPE=n1-standard-2
   local IMAGE_PROJECT=ubuntu-os-cloud
   local IMAGE_FAMILY=ubuntu-2004-lts
   local STARTUP_SCRIPT='
   #!/bin/bash
+  URL="http://metadata.google.internal/computeMetadata/v1/project/attributes"
+  SSH_PRIVATE_KEY=$(curl -s "$URL/SSH-key-deployment" -H "Metadata-Flavor: Google")
+  ASPNETCORE_ENVIRONMENT=$(curl -s "$URL/ASPNETCORE_ENVIRONMENT" -H "Metadata-Flavor: Google")
+  ASPNETCORE_POSTGRES_HOST=$(curl -s "$URL/ASPNETCORE_POSTGRES_HOST" -H "Metadata-Flavor: Google")
+  ASPNETCORE_POSTGRES_PORT=$(curl -s "$URL/ASPNETCORE_POSTGRES_PORT" -H "Metadata-Flavor: Google")
+  ASPNETCORE_POSTGRES_DATABASE=$(curl -s "$URL/ASPNETCORE_POSTGRES_DATABASE" -H "Metadata-Flavor: Google")
+  ASPNETCORE_POSTGRES_USER=$(curl -s "$URL/ASPNETCORE_POSTGRES_USER" -H "Metadata-Flavor: Google")
+  ASPNETCORE_POSTGRES_PASSWORD=$(curl -s "$URL/ASPNETCORE_POSTGRES_PASSWORD" -H "Metadata-Flavor: Google")
+  ASPNETCORE_STORAGE_BUCKET=$(curl -s "$URL/ASPNETCORE_STORAGE_BUCKET" -H "Metadata-Flavor: Google")
+  GOOGLE_APPLICATION_CREDENTIALS=$(curl -s "$URL/GOOGLE_APPLICATION_CREDENTIALS" -H "Metadata-Flavor: Google")
 
-  sudo apt-get update && sudo apt-get install -y apache2
-  sudo systemctl start apache2
-  sudo systemctl enable apache2
+  mkdir -p /root/.ssh
+  echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519
+  chmod 600 /root/.ssh/id_ed25519
+  ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
 
-  echo "Testpagina van Apache" | sudo tee /var/www/html/index.html > /dev/null
-  sudo chmod 644 /var/www/html/index.html
+  sudo apt-get update && sudo apt-get install -y wget apt-transport-https
+  wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
+  sudo dpkg -i /tmp/packages-microsoft-prod.deb && sudo rm /tmp/packages-microsoft-prod.deb
+  sudo apt-get update && sudo apt-get upgrade -y
+  sudo apt-get install -y git dotnet-sdk-7.0
+
+  # cd /root && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone --single-branch --branch MVP git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
+  cd /root && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
+
+  wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
+  . /.nvm/nvm.sh && nvm install 20.11.1
+
+  export HOME=/root
+  cd /root/development/MVC/ClientApp && . /.nvm/nvm.sh && npm rebuild && npm install && npm run build
+  cd /root/development/MVC && dotnet publish /root/development/MVC/MVC.csproj -c Release -o /root/app && dotnet /root/app/MVC.dll
   '
 
   local EXISTING_TEMPLATE=$(gcloud compute instance-templates list --format="value(NAME)" | grep -o "^$template_name")
@@ -470,11 +432,7 @@ function create_instance_templates() { # Step 15
     local EXIT_CODE=$?
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Instance template created successfully."
-    else
-      error_exit "Failed to create the instance template."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Instance template created successfully."; else error_exit "Failed to create the instance template."; fi
   else
     echo -n "* Step 15/$global_staps:"
     skip "Instance template already exists. Skipping creation."
@@ -486,8 +444,8 @@ function create_instance_group() { # Step 16
   local INSTANCE_GROUP_SIZE=1
   local MIN_REPLICAS=1
   local MAX_REPLICAS=5
-  local TARGET_CPU_UTILIZATION=0.75
-
+  local TARGET_CPU_UTILIZATION=0.80   # 80%
+  local COOL_DOWN_PERIOD=60           # 1 Minute
   local EXISTING_INSTANCE_GROUP=$(gcloud compute instance-groups list --format="value(NAME)" | grep -o "^$instance_group_name")
 
   if [ -z "$EXISTING_INSTANCE_GROUP" ]; then
@@ -502,15 +460,12 @@ function create_instance_group() { # Step 16
       --zone=$zone \
       --min-num-replicas=$MIN_REPLICAS \
       --max-num-replicas=$MAX_REPLICAS \
+      --cool-down-period=$COOL_DOWN_PERIOD \
       --target-cpu-utilization=$TARGET_CPU_UTILIZATION > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Instance group created successfully."
-    else
-      error_exit "Failed to create the instance group."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Instance group created successfully."; else error_exit "Failed to create the instance group."; fi
   else
     echo -n "* Step 16/$global_staps:"
     skip "Instance group already exists. Skipping creation."
@@ -529,37 +484,21 @@ function create_load_balancer() { # Step 17
 
   if [ -z "$EXISTING_LOAD_BALANCER" ]; then
     loading_icon 10 "* Step 17/$global_staps:" &
-    gcloud compute health-checks create http $HEALTH_CHECK_NAME \
-      --port=80 > ./deployment-script.log 2>&1
+    gcloud compute health-checks create http $HEALTH_CHECK_NAME --port=80 > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
-    gcloud compute backend-services create $BACKEND_SERVICE_NAME \
-      --protocol=HTTP \
-      --health-checks=$HEALTH_CHECK_NAME \
-      --global > ./deployment-script.log 2>&1
+    gcloud compute backend-services create $BACKEND_SERVICE_NAME --protocol=HTTP --health-checks=$HEALTH_CHECK_NAME --global > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
-    gcloud compute backend-services add-backend $BACKEND_SERVICE_NAME \
-      --instance-group=$instance_group_name \
-      --instance-group-zone=$zone \
-      --global > ./deployment-script.log 2>&1
+    gcloud compute backend-services add-backend $BACKEND_SERVICE_NAME --instance-group=$instance_group_name --instance-group-zone=$zone --global > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
-    gcloud compute url-maps create $URL_MAP_NAME \
-      --default-service=$BACKEND_SERVICE_NAME > ./deployment-script.log 2>&1
+    gcloud compute url-maps create $URL_MAP_NAME --default-service=$BACKEND_SERVICE_NAME > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
-    gcloud compute target-http-proxies create $TARGET_PROXY_NAME \
-      --url-map=$URL_MAP_NAME > ./deployment-script.log 2>&1
+    gcloud compute target-http-proxies create $TARGET_PROXY_NAME --url-map=$URL_MAP_NAME > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
-    gcloud compute forwarding-rules create $FORWARDING_RULE_NAME \
-      --global \
-      --target-http-proxy=$TARGET_PROXY_NAME \
-      --ports=80 > ./deployment-script.log 2>&1
+    gcloud compute forwarding-rules create $FORWARDING_RULE_NAME --global --target-http-proxy=$TARGET_PROXY_NAME --ports=80 > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then
-      success "Load balancer created successfully."
-    else
-      error_exit "Failed to create the load balancer."
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Load balancer created successfully."; else error_exit "Failed to create the load balancer."; fi
   else
     echo -n "* Step 17/$global_staps:"
     skip "Load balancer already exists. Skipping creation."
@@ -570,20 +509,14 @@ function create_load_balancer() { # Step 17
 function delete_project() {
   local EXISTING_PROJECTS=$(gcloud projects list 2>/dev/null | grep -o "^$Projectid")
 
-  if [ -z "$EXISTING_PROJECTS" ]; then
-    error_exit "Project does not exist."
-  fi
-  
+  if [ -z "$EXISTING_PROJECTS" ]; then error_exit "Project does not exist."; fi
+
   loading_icon 10 "* Deleting project $Projectid:" &
   gcloud projects delete $Projectid --quiet > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
   wait
 
-  if [ $EXIT_CODE -eq 0 ]; then
-    success "Project deleted successfully."
-  else
-    error_exit "Failed to delete the project."
-  fi
+  if [ $EXIT_CODE -eq 0 ]; then success "Project deleted successfully."; else error_exit "Failed to delete the project."; fi
 }
 
 welcome_message
