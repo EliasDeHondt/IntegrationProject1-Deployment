@@ -10,7 +10,6 @@ rood='\e[0;31m'
 blauw='\e[0;34m'
 yellow='\e[0;33m'
 groen='\e[0;32m'
-line="***********************************************"
 global_staps=17
 
 # Default GCloud variables.
@@ -48,14 +47,16 @@ function skip() {
   echo -e "\n*\n* ${yellow}$1${reset}\n*"
 }
 
-# Functie: Print the welcome message.
-function welcome_message() {
+# Functie: Banner message.
+function banner_message() {
   clear
-  echo "$line"
-  echo "*                                             *"
-  echo -e "* ${blauw}Welcome to the CodeForge deployment script!${reset} *"
-  echo "*                                             *"
-  echo "$line"
+  local MESSAGE="$1"
+  local LENGTH=$(( ${#MESSAGE} + 2 ))
+  line="*$(printf "%${LENGTH}s" | tr ' ' '*')*"
+  local LINE1="*$(printf "%${LENGTH}s" | tr ' ' ' ')*"
+  echo "$line" && echo "$LINE1"
+  echo -e "* ${blauw}$MESSAGE${reset} *"
+  echo "$LINE1" && echo "$line"
 }
 
 # Functie: Bash validatie.
@@ -304,7 +305,7 @@ function create_storage_bucket() { # Step 11
 
 # Functie: Create a new service account if it doesn't already exist.
 function create_service_account() { # Step 12
-  local EXISTING_ACCOUNT=$(gcloud iam service-accounts list | grep -o "${name_service_account}@${projectid}.iam.gserviceaccount.com")
+  local EXISTING_ACCOUNT=$(gcloud iam service-accounts list | grep -o "${user_email}")
 
   if [ -z "$EXISTING_ACCOUNT" ]; then
     loading_icon 10 "* Step 12/$global_staps:" &
@@ -358,14 +359,15 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
   local METADATA_VALUE7="123"
 
   gcloud iam service-accounts keys create service-account-key.json --iam-account=$user_email > ./deployment-script.log 2>&1
-  local SERVICE_ACCOUNT_KEY=$(cat service-account-key.json)
-  sudo rm -f service-account-key.json
-
-  loading_icon 10 "* Step 14/$global_staps:" &
-  gcloud compute project-info add-metadata --metadata="SSH-key-deployment=$METADATA_VALUE1,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE2,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE3,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE4,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE5,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE6,ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE7,ASPNETCORE_STORAGE_BUCKET=$bucket_name,GOOGLE_APPLICATION_CREDENTIALS=$SERVICE_ACCOUNT_KEY" > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
+  loading_icon 10 "* Step 14/$global_staps:" &
+  gcloud compute project-info add-metadata --metadata="SSH-key-deployment=$METADATA_VALUE1,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE2,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE3,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE4,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE5,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE6,ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE7,ASPNETCORE_STORAGE_BUCKET=$bucket_name" > ./deployment-script.log 2>&1
+  EXIT_CODE=$((EXIT_CODE + $?))
+  gcloud compute project-info add-metadata --metadata=GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json > ./deployment-script.log 2>&1
+  EXIT_CODE=$((EXIT_CODE + $?))
   wait
 
+  rm -f service-account-key.json
   if [ $EXIT_CODE -eq 0 ]; then success "Metadata set successfully."; else error_exit "Failed to set the metadata."; fi
 }
 
@@ -495,45 +497,12 @@ function create_load_balancer() { # Step 17
   fi
 }
 
-# Functie: Delete the project if it exists.
-function delete_project() {
-  local EXISTING_PROJECTS=$(gcloud projects list 2>/dev/null | grep -o "^$Projectid")
-
-  if [ -z "$EXISTING_PROJECTS" ]; then error_exit "Project does not exist."; fi
-
-  loading_icon 10 "* Deleting project $Projectid:" &
-  gcloud projects delete $Projectid --quiet > ./deployment-script.log 2>&1
-  local EXIT_CODE=$?
-  wait
-
-  if [ $EXIT_CODE -eq 0 ]; then success "Project deleted successfully."; else error_exit "Failed to delete the project."; fi
-}
-
-# Functie: View the CodeForge dashboard.
-function view_dashboard() {
-  clear
-  echo "$line"
-  echo "*                                             *"
-  echo -e "* ${blauw}View the CodeForge dashboard:${reset} *"
-  echo "*                                             *"
-  echo "$line"
-}
-
-welcome_message
-bash_validation
-touch ./deployment-script.log
-
-echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Delete the infrastructure\n* ${blauw}[3]${reset} View Dashboard\n* ${blauw}[4]${reset} Exit"
-read -p "* Enter the number of your choice: " choice
-echo -e "*"
-if [ "$choice" == "1" ]; then
-  welcome_message
+# Functie: Create the infrastructure.
+function create_infrastructure { # Choice 1 and 3
   echo -e "*"
   read -p "* Do you want to override the default variables? (Y/n): " configure
   if [ "$configure" == "Y" ] || [ "$configure" == "y" ] || [ -z "$configure" ]; then
     echo -e "*"
-    echo -n "* Enter the project id: "
-    read projectid
     echo -n "* Enter the region: "
     read region
     echo -n "* Enter the zone: "
@@ -545,10 +514,17 @@ if [ "$choice" == "1" ]; then
   else
     error_exit "Invalid choice."
   fi
-  welcome_message
+  
   echo -e "*"
-  create_project; wait                        # Step 1
-  set_project; wait                           # Step 2
+  banner_message "Welcome to the CodeForge deployment script!"
+  if [ $1 -eq 0 ]; then
+    create_project; wait                        # Step 1
+    set_project; wait                           # Step 2
+  elif [ $1 -eq 1 ]; then
+    select_project
+    skip "Skipping steps 1 and 2."
+  fi
+  
   link_billing_account; wait                  # Step 3
   enable_apis; wait                           # Step 4
   create_network; wait                        # Step 5
@@ -564,16 +540,81 @@ if [ "$choice" == "1" ]; then
   create_instance_templates; wait             # Step 15
   create_instance_group; wait                 # Step 16
   create_load_balancer; wait                  # Step 17
+}
+
+# Functie: Delete the project if it exists.
+function delete_project() { # Choice 2
+  local EXISTING_PROJECTS=$(gcloud projects list 2>/dev/null | grep -o "^$projectid")
+
+  if [ -z "$EXISTING_PROJECTS" ]; then error_exit "Project does not exist."; fi
+
+  loading_icon 10 "* Deleting project $projectid:" &
+  gcloud projects delete $projectid --quiet > ./deployment-script.log 2>&1
+  local EXIT_CODE=$?
+  wait
+
+  if [ $EXIT_CODE -eq 0 ]; then success "Project deleted successfully."; else error_exit "Failed to delete the project."; fi
+}
+
+# Functie: View the CodeForge dashboard.
+function view_dashboard() { # Choice 4
+  while true; do
+    banner_message "Viewing the CodeForge dashboard."
+
+
+    sleep 5
+  done
+
+}
+
+# Function: Select a project and set it as the current project.
+function select_project() {
+  echo -e "*\n* Available projects:"
+  gcloud projects list --format="value(projectId)" | nl -w 3 -s "] " | while read -r line; do echo -e "*   [$line"; done
+  echo -e "*\n* Enter the project number or ID: \c"
+  read project_input
+  if [[ "$project_input" =~ ^[0-9]+$ ]]; then
+    num_projects=$(gcloud projects list --format="value(projectId)" | wc -l)
+    if (( project_input <= num_projects )); then
+      projectid=$(gcloud projects list --format="value(projectId)" | sed -n "${project_input}p")
+    else
+      error_exit "Invalid project number. Please enter a valid project number."
+    fi
+  else
+    error_exit "Invalid input. Please enter a valid project number."
+  fi
+  projectname=$(gcloud projects describe $projectid --format="value(name)")
+  gcloud config set project $projectid > ./deployment-script.log 2>&1
+  echo "* Selected project: $projectname" && projectid=$projectname
+  sleep 4
+}
+
+banner_message "Welcome to the CodeForge deployment script!"
+bash_validation
+touch ./deployment-script.log
+
+echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Update the infrastructure\n* ${blauw}[3]${reset} Delete the infrastructures\n* ${blauw}[4]${reset} View dashboard\n* ${blauw}[5]${reset} Exit"
+read -p "* Enter the number of your choice: " choice
+echo -e "*"
+if [ "$choice" == "1" ]; then
+  banner_message "Creating the infrastructure."
+  create_infrastructure 0
   success_exit "Infrastructure created successfully."
 elif [ "$choice" == "2" ]; then
-  welcome_message
-  echo -ne "*\n* Delete project (id): "
-  read Projectid
+  banner_message "Updating the infrastructure."
+  create_infrastructure 1
+  success_exit "Infrastructure updated successfully."
+
+elif [ "$choice" == "3" ]; then
+  banner_message "Deleting the infrastructure."
+  select_project
   delete_project; wait
   success_exit "Infrastructure deleted successfully."
-elif [ "$choice" == "3" ]; then
-  view_dashboard
 elif [ "$choice" == "4" ]; then
+  banner_message "Viewing the CodeForge dashboard."
+  select_project
+  view_dashboard
+elif [ "$choice" == "5" ]; then
   success_exit "Exiting script."
 else
   error_exit "Invalid choice."
