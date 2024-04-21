@@ -21,8 +21,8 @@ template_name=codeforge-template
 network_name=codeforge-network
 subnet_name=codeforge-subnet
 name_service_account="codeforge-service-account"
-json_key_file=codeforge-service-account-key.json
 instance_group_name=codeforge-instance-group
+user_email="${name_service_account}@${projectid}.iam.gserviceaccount.com"
 bucket_name=gs://codeforge-video-bucket-$(date +%Y%m%d%H%M%S)/
 
 
@@ -323,14 +323,13 @@ function create_service_account() { # Step 12
 
 # Functie: Add permissions to the service account if it doesn't already have them.
 function add_permissions_to_service_account() { # Step 13
-  local USER_EMAIL="${name_service_account}@${projectid}.iam.gserviceaccount.com"
   local ROLE="roles/storage.admin"
-  local EXISTING_BINDINGS=$(gcloud projects get-iam-policy $projectid --flatten="bindings[].members" --format="value(bindings.members)" | grep -o "serviceAccount:${USER_EMAIL}")
+  local EXISTING_BINDINGS=$(gcloud projects get-iam-policy $projectid --flatten="bindings[].members" --format="value(bindings.members)" | grep -o "serviceAccount:${user_email}")
 
   if [ -z "$EXISTING_BINDINGS" ]; then
     loading_icon 10 "* Step 13/$global_staps:" &
     gcloud projects add-iam-policy-binding $projectid \
-      --member=serviceAccount:$USER_EMAIL \
+      --member=serviceAccount:$user_email \
       --role=$ROLE > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
     wait
@@ -340,10 +339,6 @@ function add_permissions_to_service_account() { # Step 13
     echo -n "* Step 13/$global_staps:"
     skip "Permissions for the service account already exist. Skipping addition."
   fi
-
-  # Export the service account key to a JSON file.
-  gcloud iam service-accounts keys create $json_key_file \
-    --iam-account=$USER_EMAIL > ./deployment-script.log 2>&1
 }
 
 # Functie: Set the metadata if it doesn't already exist.
@@ -362,17 +357,12 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
   local METADATA_VALUE6="admin"
   local METADATA_VALUE7="123"
 
+  gcloud iam service-accounts keys create service-account-key.json --iam-account=$user_email > ./deployment-script.log 2>&1
+  local SERVICE_ACCOUNT_KEY=$(cat service-account-key.json)
+  sudo rm -f service-account-key.json
+
   loading_icon 10 "* Step 14/$global_staps:" &
-  gcloud compute project-info add-metadata --metadata="\
-SSH-key-deployment=$METADATA_VALUE1,\
-ASPNETCORE_ENVIRONMENT=$METADATA_VALUE2,\
-ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE3,\
-ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE4,\
-ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE5,\
-ASPNETCORE_POSTGRES_USER=$METADATA_VALUE6,\
-ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE7,\
-ASPNETCORE_STORAGE_BUCKET=$bucket_name,\
-GOOGLE_APPLICATION_CREDENTIALS=$json_key_file" > ./deployment-script.log 2>&1
+  gcloud compute project-info add-metadata --metadata="SSH-key-deployment=$METADATA_VALUE1,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE2,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE3,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE4,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE5,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE6,ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE7,ASPNETCORE_STORAGE_BUCKET=$bucket_name,GOOGLE_APPLICATION_CREDENTIALS=$SERVICE_ACCOUNT_KEY" > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
   wait
 
@@ -519,19 +509,26 @@ function delete_project() {
   if [ $EXIT_CODE -eq 0 ]; then success "Project deleted successfully."; else error_exit "Failed to delete the project."; fi
 }
 
+# Functie: View the CodeForge dashboard.
+function view_dashboard() {
+  clear
+  echo "$line"
+  echo "*                                             *"
+  echo -e "* ${blauw}View the CodeForge dashboard:${reset} *"
+  echo "*                                             *"
+  echo "$line"
+}
+
 welcome_message
 bash_validation
 touch ./deployment-script.log
 
-# Ask the user what they want to do. Do they want to create the infrastructure or delete?
-echo -e "*"
-echo -e "* [1] Create the infrastructure\n* [2] Delete the infrastructure"
+echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Delete the infrastructure\n* ${blauw}[3]${reset} View Dashboard\n* ${blauw}[4]${reset} Exit"
 read -p "* Enter the number of your choice: " choice
 echo -e "*"
 if [ "$choice" == "1" ]; then
   welcome_message
   echo -e "*"
-  # Stel een vraag aan de user dat hij volgende variabelen wilt configureren of de default wilt gebruik. (EN) projectid, region, zone
   read -p "* Do you want to override the default variables? (Y/n): " configure
   if [ "$configure" == "Y" ] || [ "$configure" == "y" ] || [ -z "$configure" ]; then
     echo -e "*"
@@ -550,49 +547,34 @@ if [ "$choice" == "1" ]; then
   fi
   welcome_message
   echo -e "*"
-  create_project          # Step 1
-  wait
-  set_project             # Step 2
-  wait
-  link_billing_account    # Step 3
-  wait
-  enable_apis             # Step 4
-  wait
-  create_network          # Step 5
-  wait
-  create_network_subnet   # Step 6
-  wait
-  create_firewallrule     # Step 7
-  wait
-  create_postgres_instance # Step 8
-  wait
-  create_postgres_user    # Step 9
-  wait
-  create_postgres_database # Step 10
-  wait
-  create_storage_bucket   # Step 11
-  wait
-  create_service_account  # Step 12
-  wait
-  add_permissions_to_service_account # Step 13
-  wait
-  set_metadata            # Step 14
-  wait
-  create_instance_templates # Step 15
-  wait
-  create_instance_group   # Step 16
-  wait
-  create_load_balancer    # Step 17
-  wait
+  create_project; wait                        # Step 1
+  set_project; wait                           # Step 2
+  link_billing_account; wait                  # Step 3
+  enable_apis; wait                           # Step 4
+  create_network; wait                        # Step 5
+  create_network_subnet; wait                 # Step 6
+  create_firewallrule; wait                   # Step 7
+  create_postgres_instance; wait              # Step 8
+  create_postgres_user; wait                  # Step 9
+  create_postgres_database; wait              # Step 10
+  create_storage_bucket; wait                 # Step 11
+  create_service_account; wait                # Step 12
+  add_permissions_to_service_account; wait    # Step 13
+  set_metadata; wait                          # Step 14
+  create_instance_templates; wait             # Step 15
+  create_instance_group; wait                 # Step 16
+  create_load_balancer; wait                  # Step 17
   success_exit "Infrastructure created successfully."
 elif [ "$choice" == "2" ]; then
   welcome_message
-  echo -e "*"
-  echo -n "* Delete project (id): "
+  echo -ne "*\n* Delete project (id): "
   read Projectid
-  delete_project
-  wait
+  delete_project; wait
   success_exit "Infrastructure deleted successfully."
+elif [ "$choice" == "3" ]; then
+  view_dashboard
+elif [ "$choice" == "4" ]; then
+  success_exit "Exiting script."
 else
   error_exit "Invalid choice."
 fi
