@@ -141,7 +141,7 @@ function link_billing_account() { # Step 3
 
 # Functie: Enable the required APIs.
 function enable_apis() { # Step 4
-  loading_icon 10 "* Stap 4/$global_staps:" &
+  loading_icon 15 "* Stap 4/$global_staps:" &
   gcloud services enable sqladmin.googleapis.com > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
   gcloud services enable cloudresourcemanager.googleapis.com > ./deployment-script.log 2>&1
@@ -162,7 +162,7 @@ function create_network() { # Step 5
   local EXISTING_NETWORK=$(gcloud compute networks list --format="value(NAME)" | grep -o "^$network_name")
 
   if [ -z "$EXISTING_NETWORK" ]; then
-    loading_icon 10 "* Step 5/$global_staps:" &
+    loading_icon 15 "* Step 5/$global_staps:" &
     gcloud compute networks create $network_name \
       --subnet-mode=auto \
       --bgp-routing-mode=regional > ./deployment-script.log 2>&1
@@ -441,7 +441,7 @@ function create_instance_group() { # Step 16
   local EXISTING_INSTANCE_GROUP=$(gcloud compute instance-groups list --format="value(NAME)" | grep -o "^$instance_group_name")
 
   if [ -z "$EXISTING_INSTANCE_GROUP" ]; then
-    loading_icon 10 "* Step 16/$global_staps:" &
+    loading_icon 20 "* Step 16/$global_staps:" &
     gcloud compute instance-groups managed create $instance_group_name \
       --base-instance-name=$instance_group_name \
       --size=$INSTANCE_GROUP_SIZE \
@@ -475,7 +475,7 @@ function create_load_balancer() { # Step 17
   local EXISTING_LOAD_BALANCER=$(gcloud compute forwarding-rules list --format="value(NAME)" | grep -o "^$FORWARDING_RULE_NAME")
 
   if [ -z "$EXISTING_LOAD_BALANCER" ]; then
-    loading_icon 10 "* Step 17/$global_staps:" &
+    loading_icon 20 "* Step 17/$global_staps:" &
     gcloud compute health-checks create http $HEALTH_CHECK_NAME --port=5000 > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
     gcloud compute backend-services create $BACKEND_SERVICE_NAME --protocol=HTTP --health-checks=$HEALTH_CHECK_NAME --global > ./deployment-script.log 2>&1
@@ -515,14 +515,15 @@ function create_infrastructure { # Choice 1 and 3
     error_exit "Invalid choice."
   fi
   
-  echo -e "*"
-  banner_message "Welcome to the CodeForge deployment script!"
   if [ $1 -eq 0 ]; then
+    banner_message "Creating the infrastructure."
     create_project; wait                        # Step 1
     set_project; wait                           # Step 2
   elif [ $1 -eq 1 ]; then
+    banner_message "Updating the infrastructure."
     select_project
-    skip "Skipping steps 1 and 2."
+    banner_message "Updating the infrastructure."
+    echo -e "*\n* ${yellow}Skipping steps 1 and 2.${reset}\n*"
   fi
   
   link_billing_account; wait                  # Step 3
@@ -560,8 +561,6 @@ function delete_project() { # Choice 2
 function view_dashboard() { # Choice 4
   while true; do
     banner_message "Viewing the CodeForge dashboard."
-
-
     sleep 5
   done
 
@@ -599,12 +598,13 @@ echo -e "*"
 if [ "$choice" == "1" ]; then
   banner_message "Creating the infrastructure."
   create_infrastructure 0
+  success "Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")"
   success_exit "Infrastructure created successfully."
 elif [ "$choice" == "2" ]; then
   banner_message "Updating the infrastructure."
   create_infrastructure 1
+  success "Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")"
   success_exit "Infrastructure updated successfully."
-
 elif [ "$choice" == "3" ]; then
   banner_message "Deleting the infrastructure."
   select_project
