@@ -563,7 +563,6 @@ function view_dashboard() { # Choice 4
     banner_message "Viewing the CodeForge dashboard."
     sleep 5
   done
-
 }
 
 # Function: Select a project and set it as the current project.
