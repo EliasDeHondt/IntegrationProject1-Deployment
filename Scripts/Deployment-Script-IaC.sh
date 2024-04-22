@@ -497,7 +497,7 @@ function create_load_balancer() {
     EXIT_CODE=$((EXIT_CODE + $?))
     
     # Create a SSL certificate
-    gcloud compute ssl-certificates create codeforge-ssl-certificate --domains=codeforge.eliasdh.com --global
+    gcloud compute ssl-certificates create codeforge-ssl-certificate --domains=codeforge.eliasdh.com --global > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
 
     # Create a target HTTPS proxy
