@@ -8,6 +8,8 @@
 3. [✨Steps](#✨steps)
     1. [👉Step 0: Preparations](#👉step-0-preparations)
     2. [👉Step 1: Configure Environment](#👉step-1-configure-environment)
+    3. [👉Step 2: Run Create Script](#👉step-2-run-create-script)
+    4. [👉Step 3: Configure Custom Domain](#👉step-3-configure-custom-domain)
 4. [🔗Links](#🔗links)
 
 ---
@@ -42,12 +44,19 @@ This document will guide you through the process of deploying the entire infrast
     ```bash
     cd IntegrationProject1-Deployment/Scripts
     ```
-- Run the [Create Infrastructure IaC Script](/Scripts/Deployment-Script-IaC.sh.sh)
+- Run the [Deployment Script IaC](/Scripts/Deployment-Script-IaC.sh)
     ```bash
     chmod +x Deployment-Script-IaC.sh
     sudo ./Deployment-Script-IaC.sh
     ```
 > ***The script will do the rest!***
+
+### 👉Step 3: Configure Custom Domain
+
+- When you did not use the default configuration of the script, you will need to go to your DNS provider and add a records That contains the public IP address of the load balancer you will get this IP address at the end of the script execution.
+
+> **Example of a DNS record:**
+![Instructions IaC Deployment 1](/Images/Instructions-IaC-Deployment-1.png)
 
 ## 🔗Links
 - 👯 Web hosting company [EliasDH.com](https://eliasdh.com).

@@ -128,7 +128,7 @@ This document will guide you through the process of deploying the MVP of the Cod
     CONNECTION_STRING="Host=${IP_ADDRESS};Port=${PORT};Database=codeforge;User Id=${USER_NAME};Password=${PASSW>
     echo "Connection String: ${CONNECTION_STRING}"
     ```
-- Navigate to the project folder
+- Rebuild the project and restore the project
     ```bash
     cd IntegrationProject1-Development/MVC/ClientApp
     npm rebuild
