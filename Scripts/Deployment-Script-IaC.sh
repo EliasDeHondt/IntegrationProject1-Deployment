@@ -597,13 +597,11 @@ echo -e "*"
 if [ "$choice" == "1" ]; then
   banner_message "Creating the infrastructure."
   create_infrastructure 0
-  success "Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")"
-  success_exit "Infrastructure created successfully."
+  success_exit "Infrastructure created successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")"
 elif [ "$choice" == "2" ]; then
   banner_message "Updating the infrastructure."
   create_infrastructure 1
-  success "Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")"
-  success_exit "Infrastructure updated successfully."
+  success_exit "Infrastructure updated successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")"
 elif [ "$choice" == "3" ]; then
   banner_message "Deleting the infrastructure."
   select_project

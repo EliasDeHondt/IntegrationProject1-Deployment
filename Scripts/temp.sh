@@ -83,6 +83,3 @@ while true; do gcloud compute instances get-serial-port-output codeforge-vm --zo
 
 gcloud compute instances delete codeforge-vm --zone=us-central1-c --quiet
 gcloud compute instance-templates delete codeforge-template --quiet
-
-# Get public IP of load balancer
-gcloud compute forwarding-rules list
