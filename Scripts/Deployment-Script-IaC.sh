@@ -23,6 +23,7 @@ name_service_account="codeforge-service-account"
 instance_group_name=codeforge-instance-group
 user_email="${name_service_account}@${projectid}.iam.gserviceaccount.com"
 bucket_name=gs://codeforge-video-bucket-$(date +%Y%m%d%H%M%S)/
+domain_name=codeforge.eliasdh.com
 
 
 # Functie: Error afhandeling.
@@ -465,8 +466,7 @@ function create_instance_group() { # Step 16
 }
 
 # Functie: Create a new load balancer if it doesn't already exist.
-function create_load_balancer() {
-  local LOAD_BALANCER_NAME=codeforge-load-balancer
+function create_load_balancer() { # Step 17
   local BACKEND_SERVICE_NAME=codeforge-backend-service
   local HEALTH_CHECK_NAME=codeforge-health-check
   local URL_MAP_NAME=codeforge-url-map
@@ -497,7 +497,7 @@ function create_load_balancer() {
     EXIT_CODE=$((EXIT_CODE + $?))
     
     # Create a SSL certificate
-    gcloud compute ssl-certificates create codeforge-ssl-certificate --domains=codeforge.eliasdh.com --global > ./deployment-script.log 2>&1
+    gcloud compute ssl-certificates create codeforge-ssl-certificate --domains=$domain_name --global > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
 
     # Create a target HTTPS proxy
@@ -526,11 +526,13 @@ function create_infrastructure { # Choice 1 and 3
   read -p "* Do you want to override the default variables? (Y/n): " configure
   if [ "$configure" == "Y" ] || [ "$configure" == "y" ] || [ -z "$configure" ]; then
     echo -e "*"
+    echo -n "* Enter the domain name: "
+    read domain_name
     echo -n "* Enter the region: "
     read region
     echo -n "* Enter the zone: "
     read zone
-    if [ -z "$projectid" ] || [ -z "$region" ] || [ -z "$zone" ]; then error_exit "Please enter all the required variables."; fi
+    if [ -z "$domain_name" ] || [ -z "$region" ] || [ -z "$zone" ]; then error_exit "Please enter all the required variables."; fi
   elif [ "$configure" == "n" ]; then
     echo -e "*"
     echo -n "* Using the default variables."
@@ -622,11 +624,11 @@ function main {
   if [ "$choice" == "1" ]; then
     banner_message "Creating the infrastructure."
     create_infrastructure 0
-    success_exit "Infrastructure created successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")"
+    success_exit "Infrastructure created successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*") ($domain_name)"
   elif [ "$choice" == "2" ]; then
     banner_message "Updating the infrastructure."
     create_infrastructure 1
-    success_exit "Infrastructure updated successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")"
+    success_exit "Infrastructure updated successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*") ($domain_name)"
   elif [ "$choice" == "3" ]; then
     banner_message "Deleting the infrastructure."
     select_project
