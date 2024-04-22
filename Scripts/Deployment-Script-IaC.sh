@@ -345,8 +345,7 @@ function add_permissions_to_service_account() { # Step 13
 
 # Functie: Set the metadata if it doesn't already exist.
 function set_metadata() { # Step 14
-  local METADATA_VALUE1="
------BEGIN OPENSSH PRIVATE KEY-----
+  local METADATA_VALUE1="-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
 QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
 WQAAAAtzc2gtZWQyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SA
