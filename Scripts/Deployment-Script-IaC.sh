@@ -345,7 +345,8 @@ function add_permissions_to_service_account() { # Step 13
 
 # Functie: Set the metadata if it doesn't already exist.
 function set_metadata() { # Step 14
-  local METADATA_VALUE1="-----BEGIN OPENSSH PRIVATE KEY-----
+  local METADATA_VALUE1="
+-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
 QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
 WQAAAAtzc2gtZWQyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SA
@@ -595,7 +596,7 @@ function undo_project_deletion() {
     if [ $EXIT_CODE -eq 0 ]; then success "Project restored successfully."; else error_exit "Failed to restore the project."; fi
   elif [ "$undo" == "n" ]; then
     echo -e "*"
-    echo -n "* Project deletion not undone."
+    echo "* Project deletion not undone."
   else
     error_exit "Invalid choice."
   fi
@@ -674,11 +675,11 @@ function main {
   if [ "$choice" == "1" ]; then
     banner_message "Creating the infrastructure."
     create_infrastructure 0
-    success_exit "Infrastructure created successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*") ($domain_name)"
+    success_exit "Infrastructure created successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*") (https://$domain_name)"
   elif [ "$choice" == "2" ]; then
     banner_message "Updating the infrastructure."
     create_infrastructure 1
-    success_exit "Infrastructure updated successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*") ($domain_name)"
+    success_exit "Infrastructure updated successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*") (https://$domain_name)"
   elif [ "$choice" == "3" ]; then
     banner_message "Deleting the infrastructure."
     select_project
