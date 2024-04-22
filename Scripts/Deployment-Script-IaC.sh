@@ -437,8 +437,8 @@ function create_instance_group() { # Step 16
   local INSTANCE_GROUP_SIZE=1
   local MIN_REPLICAS=1
   local MAX_REPLICAS=5
-  local TARGET_CPU_UTILIZATION=0.80   # 80%
   local COOL_DOWN_PERIOD=60           # 1 Minute
+  local TARGET_CPU_UTILIZATION=0.80   # 80%
   local EXISTING_INSTANCE_GROUP=$(gcloud compute instance-groups list --format="value(NAME)" | grep -o "^$instance_group_name")
 
   if [ -z "$EXISTING_INSTANCE_GROUP" ]; then
@@ -582,10 +582,60 @@ function delete_project() { # Choice 2
   if [ $EXIT_CODE -eq 0 ]; then success "Project deleted successfully."; else error_exit "Failed to delete the project."; fi
 }
 
+# Functie: Undo the project deletion.
+function undo_project_deletion() {
+  echo -e "*"
+  read -p "* Do you want to undo the deletion? (Y/n): " undo
+  if [ "$undo" == "Y" ] || [ "$undo" == "y" ] || [ -z "$undo" ]; then
+    loading_icon 10 "* Restoring project $projectid:" &
+    gcloud projects undelete $projectid --quiet > ./deployment-script.log 2>&1
+    local EXIT_CODE=$?
+    wait
+
+    if [ $EXIT_CODE -eq 0 ]; then success "Project restored successfully."; else error_exit "Failed to restore the project."; fi
+  elif [ "$undo" == "n" ]; then
+    echo -e "*"
+    echo -n "* Project deletion not undone."
+  else
+    error_exit "Invalid choice."
+  fi
+}
+
 # Functie: View the CodeForge dashboard.
 function view_dashboard() { # Choice 4
+  local IP_ADDRESS=$(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")
+  local NAME=$(gcloud compute forwarding-rules list --format="value(NAME)")
+  local URL="https://$domain_name"
+  local INSTANCE_GROUP_SIZE=$(gcloud compute instance-groups list --format="value(SIZE)" | grep -o "^[0-9]*")
+  local INSTANCE_GROUP_IPS=$(gcloud compute instances list --format="value(networkInterfaces[0].networkIP)" | tr '\n' ' ')
+  local SQL_IP=$(gcloud sql instances describe db1 --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
+  local BUCKET_NAME=$(gsutil ls | grep -o "${bucket_name}")
+  local MIN_REPLICAS=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.minNumReplicas)")
+  local MAX_REPLICAS=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.maxNumReplicas)")
+  local COOL_DOWN_PERIOD=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.coolDownPeriodSec)")
+  local TARGET_CPU_UTILIZATION=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.cpuUtilization.utilizationTarget)")
+
   while true; do
     banner_message "Viewing the CodeForge dashboard."
+    echo -e "*\n* Load Balancer Information:"
+    echo -e "*   | Name: $NAME"
+    echo -e "*   | URL: $URL"
+    echo -e "*   | IP Address: $IP_ADDRESS"
+    echo -e "*\n* Instance Group Information:"
+    echo -e "*   | Number of Instances: $INSTANCE_GROUP_SIZE"
+    echo -e "*   | IP Addresses: $INSTANCE_GROUP_IPS"
+    echo -e "*\n* SQL Instance Information:"
+    echo -e "*   | IP Address: $SQL_IP"
+    echo -e "*\n* Storage Bucket Information:"
+    echo -e "*   | Name: $bucket_name"
+    echo -e "*\n* Horizontal Scaling Information:"
+    echo -e "*   | Minimum Replicas: $MIN_REPLICAS"
+    echo -e "*   | Maximum Replicas: $MAX_REPLICAS"
+    echo -e "*   | Cool Down Period: $COOL_DOWN_PERIOD"
+    echo -e "*   | Target CPU Utilization: $TARGET_CPU_UTILIZATION"
+    echo -e "*\n* ${yellow}Refreshing the dashboard every 5 seconds.${reset}"
+    echo -e "*\n* ${yellow}To exit the dashboard, press CTRL+C.${reset}"
+    echo -e "${line}"
     sleep 5
   done
 }
@@ -633,6 +683,7 @@ function main {
     banner_message "Deleting the infrastructure."
     select_project
     delete_project; wait
+    undo_project_deletion; wait
     success_exit "Infrastructure deleted successfully."
   elif [ "$choice" == "4" ]; then
     banner_message "Viewing the CodeForge dashboard."
