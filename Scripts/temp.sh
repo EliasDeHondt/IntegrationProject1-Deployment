@@ -64,19 +64,21 @@ sudo dotnet /home/phygital/app/Phygital.UI.MVC.dll
 # gcloud sql instances delete db1 --quiet
 
 
-# gcloud compute networks subnets delete $subnet_name --region=$region --quiet
-# gcloud compute networks delete $network_name --quiet
+gcloud compute networks subnets delete $subnet_name --region=$region --quiet
+gcloud compute networks delete $network_name --quiet
 
 
-# gcloud compute forwarding-rules delete codeforge-forwarding-rule --global --quiet
-# gcloud compute target-http-proxies delete codeforge-target-proxy --quiet
-# gcloud compute url-maps delete codeforge-url-map --quiet
-# gcloud compute backend-services delete codeforge-backend-service --global --quiet
-# gcloud compute health-checks delete codeforge-health-check --quiet
+gcloud compute forwarding-rules delete codeforge-forwarding-rule --global --quiet
+gcloud compute target-http-proxies delete codeforge-target-proxy --quiet
+gcloud compute url-maps delete codeforge-url-map --quiet
+gcloud compute backend-services delete codeforge-backend-service --global --quiet
+gcloud compute health-checks delete codeforge-health-check --quiet
+gcloud compute ssl-certificates delete codeforge-ssl-certificate --global
 
-# gcloud compute instance-groups managed delete codeforge-instance-group --zone=us-central1-c --quiet
 
-# gcloud compute instance-templates delete codeforge-template --quiet
+gcloud compute instance-groups managed delete codeforge-instance-group --zone=us-central1-c --quiet
+
+gcloud compute instance-templates delete codeforge-template --quiet
 
 gcloud compute instances create codeforge-vm --source-instance-template=codeforge-template --zone=us-central1-c
 while true; do gcloud compute instances get-serial-port-output codeforge-vm --zone=us-central1-c; sleep 5; done

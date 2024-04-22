@@ -408,7 +408,7 @@ function create_instance_templates() { # Step 15
 
   export HOME=/root
   cd /root/development/MVC/ClientApp && . /.nvm/nvm.sh && npm rebuild && npm install && npm run build
-  cd /root/development/MVC && dotnet publish /root/development/MVC/MVC.csproj -c Release -o /root/app && dotnet /root/app/MVC.dll
+  cd /root/development/MVC && dotnet publish /root/development/MVC/MVC.csproj -c Release -o /root/app && dotnet /root/app/MVC.dll --urls=http://0.0.0.0:5000
   '
 
   local EXISTING_TEMPLATE=$(gcloud compute instance-templates list --format="value(NAME)" | grep -o "^$template_name")
@@ -465,7 +465,7 @@ function create_instance_group() { # Step 16
 }
 
 # Functie: Create a new load balancer if it doesn't already exist.
-function create_load_balancer() { # Step 17
+function create_load_balancer() {
   local LOAD_BALANCER_NAME=codeforge-load-balancer
   local BACKEND_SERVICE_NAME=codeforge-backend-service
   local HEALTH_CHECK_NAME=codeforge-health-check
@@ -476,21 +476,44 @@ function create_load_balancer() { # Step 17
 
   if [ -z "$EXISTING_LOAD_BALANCER" ]; then
     loading_icon 20 "* Step 17/$global_staps:" &
+    # Create a health check
     gcloud compute health-checks create http $HEALTH_CHECK_NAME --port=5000 > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
+    
+    # Create a backend service
     gcloud compute backend-services create $BACKEND_SERVICE_NAME --protocol=HTTP --health-checks=$HEALTH_CHECK_NAME --global > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
+    
+    # Add backend instance group to backend service
     gcloud compute backend-services add-backend $BACKEND_SERVICE_NAME --instance-group=$instance_group_name --instance-group-zone=$zone --global > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
+    
+    # Set named ports
+    gcloud compute instance-groups set-named-ports $instance_group_name --named-ports=http:5000 --zone=$zone > ./deployment-script.log 2>&1
+    EXIT_CODE=$((EXIT_CODE + $?))
+    
+    # Create a URL map
     gcloud compute url-maps create $URL_MAP_NAME --default-service=$BACKEND_SERVICE_NAME > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
-    gcloud compute target-http-proxies create $TARGET_PROXY_NAME --url-map=$URL_MAP_NAME > ./deployment-script.log 2>&1
+    
+    # Create a SSL certificate
+    gcloud compute ssl-certificates create codeforge-ssl-certificate --domains=codeforge.eliasdh.com --global
     EXIT_CODE=$((EXIT_CODE + $?))
-    gcloud compute forwarding-rules create $FORWARDING_RULE_NAME --global --target-http-proxy=$TARGET_PROXY_NAME --ports=5000 > ./deployment-script.log 2>&1
+
+    # Create a target HTTPS proxy
+    gcloud compute target-https-proxies create $TARGET_PROXY_NAME --url-map=$URL_MAP_NAME --ssl-certificates=codeforge-ssl-certificate > ./deployment-script.log 2>&1
+    EXIT_CODE=$((EXIT_CODE + $?))
+    
+    # Create a forwarding rule
+    gcloud compute forwarding-rules create $FORWARDING_RULE_NAME --global --target-https-proxy=$TARGET_PROXY_NAME --ports=443 > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then success "Load balancer created successfully."; else error_exit "Failed to create the load balancer."; fi
+    if [ $EXIT_CODE -eq 0 ]; then 
+      success "Load balancer created successfully."; 
+    else 
+      error_exit "Failed to create the load balancer."; 
+    fi
   else
     echo -n "* Step 17/$global_staps:"
     skip "Load balancer already exists. Skipping creation."
@@ -587,32 +610,37 @@ function select_project() {
   sleep 4
 }
 
-banner_message "Welcome to the CodeForge deployment script!"
-bash_validation
-touch ./deployment-script.log
+# Functie: Main function.
+function main {
+  banner_message "Welcome to the CodeForge deployment script!"
+  bash_validation
+  touch ./deployment-script.log
 
-echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Update the infrastructure\n* ${blauw}[3]${reset} Delete the infrastructures\n* ${blauw}[4]${reset} View dashboard\n* ${blauw}[5]${reset} Exit"
-read -p "* Enter the number of your choice: " choice
-echo -e "*"
-if [ "$choice" == "1" ]; then
-  banner_message "Creating the infrastructure."
-  create_infrastructure 0
-  success_exit "Infrastructure created successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")"
-elif [ "$choice" == "2" ]; then
-  banner_message "Updating the infrastructure."
-  create_infrastructure 1
-  success_exit "Infrastructure updated successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")"
-elif [ "$choice" == "3" ]; then
-  banner_message "Deleting the infrastructure."
-  select_project
-  delete_project; wait
-  success_exit "Infrastructure deleted successfully."
-elif [ "$choice" == "4" ]; then
-  banner_message "Viewing the CodeForge dashboard."
-  select_project
-  view_dashboard
-elif [ "$choice" == "5" ]; then
-  success_exit "Exiting script."
-else
-  error_exit "Invalid choice."
-fi
+  echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Update the infrastructure\n* ${blauw}[3]${reset} Delete the infrastructures\n* ${blauw}[4]${reset} View dashboard\n* ${blauw}[5]${reset} Exit"
+  read -p "* Enter the number of your choice: " choice
+  echo -e "*"
+  if [ "$choice" == "1" ]; then
+    banner_message "Creating the infrastructure."
+    create_infrastructure 0
+    success_exit "Infrastructure created successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")"
+  elif [ "$choice" == "2" ]; then
+    banner_message "Updating the infrastructure."
+    create_infrastructure 1
+    success_exit "Infrastructure updated successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")"
+  elif [ "$choice" == "3" ]; then
+    banner_message "Deleting the infrastructure."
+    select_project
+    delete_project; wait
+    success_exit "Infrastructure deleted successfully."
+  elif [ "$choice" == "4" ]; then
+    banner_message "Viewing the CodeForge dashboard."
+    select_project
+    view_dashboard
+  elif [ "$choice" == "5" ]; then
+    success_exit "Exiting script."
+  else
+    error_exit "Invalid choice."
+  fi
+}
+
+main # Start the script.
