@@ -649,7 +649,7 @@ function create_infrastructure { # Choice 1 and 3
   create_nat; wait                            # Step 9
   create_vpc_network_peering; wait            # Step 10
   add_vpc_network_peering; wait               # Step 11
-  echo -e "*\n* ${yellow}We will wait for 6 minutes so that the network can migrate before we go to the next steps.${reset}"
+  echo -e "* ${yellow}We will wait for 6 minutes so that the network can migrate before we go to the next steps.${reset}\n*"
   sleep 360                                   # Wait for 6 minutes
   create_postgres_instance; wait              # Step 12
   create_postgres_user; wait                  # Step 13
