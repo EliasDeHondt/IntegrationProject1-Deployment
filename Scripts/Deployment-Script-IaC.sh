@@ -757,13 +757,41 @@ function select_project() {
   sleep 4
 }
 
+# Functie: Credits of the developers.
+function credits() {
+  local COLOR_ELIAS_DE_HONDT="\033[96m" # Light cyan
+  local COLOR_VINCENT_VERBOVEN="\e[91m" # Light red
+  local COLOR_VERA_WISE="\e[95m" # Light magenta
+  local COLOR_MATTHIAS_HENDRICKX="\e[92m" # Light green
+  local COLOR_JANA_YANG="\e[93m" # Light yellow
+  local GITGUB_URL_ELIAS_DE_HONDT="https://github.com/EliasDeHondt"
+  local GITGUB_URL_VINCENT_VERBOVEN="https://github.com/Meastro85"
+  local GITGUB_URL_VERA_WISE="https://github.com/VW03"
+  local GITGUB_URL_MATTHIAS_HENDRICKX="https://github.com/MatthiasHendrickx"
+  local GITGUB_URL_JANA_YANG="https://github.com/janayang"
+
+  echo -e "*\n* ${COLOR_ELIAS_DE_HONDT}Elias De Hondt${reset}"
+  echo -e "*   | ${COLOR_ELIAS_DE_HONDT}GitHub: ${GITGUB_URL_ELIAS_DE_HONDT}${reset}"
+  echo -e "*\n* ${COLOR_VINCENT_VERBOVEN}Vincent Verboven${reset}"
+  echo -e "*   | ${COLOR_VINCENT_VERBOVEN}GitHub: ${GITGUB_URL_VINCENT_VERBOVEN}${reset}"
+  echo -e "*\n* ${COLOR_VERA_WISE}Vera Wise${reset}"
+  echo -e "*   | ${COLOR_VERA_WISE}GitHub: ${GITGUB_URL_VERA_WISE}${reset}"
+  echo -e "*\n* ${COLOR_MATTHIAS_HENDRICKX}Matthias Hendrickx${reset}"
+  echo -e "*   | ${COLOR_MATTHIAS_HENDRICKX}GitHub: ${GITGUB_URL_MATTHIAS_HENDRICKX}${reset}"
+  echo -e "*\n* ${COLOR_JANA_YANG}Jana Yang${reset}"
+  echo -e "*   | ${COLOR_JANA_YANG}GitHub: ${GITGUB_URL_JANA_YANG}${reset}"
+  echo -e "${line}"
+  sleep 30
+  main
+}
+
 # Functie: Main function.
 function main { # Start the script.
   banner_message "Welcome to the CodeForge deployment script!"
   bash_validation
   touch ./deployment-script.log
 
-  echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Update the infrastructure\n* ${blauw}[3]${reset} Delete the infrastructures\n* ${blauw}[4]${reset} View dashboard\n* ${blauw}[5]${reset} Exit"
+  echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Update the infrastructure\n* ${blauw}[3]${reset} Delete the infrastructures\n* ${blauw}[4]${reset} View dashboard\n* ${blauw}[5]${reset} Credits\n* ${blauw}[6]${reset} Exit"
   read -p "* Enter the number of your choice: " choice
   echo -e "*"
   if [ "$choice" == "1" ]; then
@@ -785,6 +813,9 @@ function main { # Start the script.
     select_project
     view_dashboard
   elif [ "$choice" == "5" ]; then
+    banner_message "          Credits          "
+    credits
+  elif [ "$choice" == "6" ]; then
     success_exit "Exiting script."
   else
     error_exit "Invalid choice."
