@@ -420,6 +420,7 @@ function create_instance_templates() { # Step 15
       --machine-type=$MACHINE_TYPE \
       --image-project=$IMAGE_PROJECT \
       --image-family=$IMAGE_FAMILY \
+      --no-address \
       --subnet=projects/$projectid/regions/$region/subnetworks/$subnet_name \
       --metadata=startup-script="$STARTUP_SCRIPT" > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
