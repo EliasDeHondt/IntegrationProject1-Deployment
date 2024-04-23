@@ -10,19 +10,21 @@ rood='\e[0;31m'
 blauw='\e[0;34m'
 yellow='\e[0;33m'
 groen='\e[0;32m'
-global_staps=17
+global_staps=19
+datetime=$(date +%Y%m%d%H%M%S)
 
 # Default GCloud variables.
-projectid="codeforge-$(date +%Y%m%d%H%M%S)" # projectid="codeforge-projectid"
+projectid=codeforge-$datetime # projectid="codeforge-projectid"
 region=us-central1
 zone=us-central1-c
 template_name=codeforge-template
 network_name=codeforge-network
 subnet_name=codeforge-subnet
+router_name=codforge-router-$datetime
 name_service_account="codeforge-service-account"
 instance_group_name=codeforge-instance-group
 user_email="${name_service_account}@${projectid}.iam.gserviceaccount.com"
-bucket_name=gs://codeforge-video-bucket-$(date +%Y%m%d%H%M%S)/
+bucket_name=gs://codeforge-video-bucket-$datetime/
 domain_name=codeforge.eliasdh.com
 
 
@@ -203,7 +205,7 @@ function create_firewallrule() { # Step 7
   local EXISTING_FIREWALL_RULE=$(gcloud compute firewall-rules list --format="value(NAME)" | grep -o "^$FIREWALL_RULE_NAME")
 
   if [ -z "$EXISTING_FIREWALL_RULE" ]; then
-    loading_icon 10 "* Step 7/$global_staps:" &
+    loading_icon 20 "* Step 7/$global_staps:" &
     gcloud compute firewall-rules create $FIREWALL_RULE_NAME \
       --network=$network_name \
       --allow=tcp:5000,tcp:22 \
@@ -218,15 +220,56 @@ function create_firewallrule() { # Step 7
   fi
 }
 
+# Functie: Create a new router if it doesn't already exist.
+function create_router() { # Step 8
+  local EXISTING_ROUTER=$(gcloud compute routers list --format="value(NAME)" | grep -o "^$router_name")
+
+  if [ -z "$EXISTING_ROUTER" ]; then
+    loading_icon 10 "* Step 8/$global_staps:" &
+    gcloud compute routers create $router_name \
+      --network=$network_name \
+      --region=$region > ./deployment-script.log 2>&1
+    local EXIT_CODE=$?
+    wait
+
+    if [ $EXIT_CODE -eq 0 ]; then success "Router created successfully."; else error_exit "Failed to create the router."; fi
+  else
+    echo -n "* Step 8/$global_staps:"
+    skip "Router already exists. Skipping creation."
+  fi
+}
+
+# Functie: Create a new Cloud NAT for all instances in the subnet if it doesn't already exist.
+function create_nat() { # Stap 9
+  local NAT_NAME=nat1
+  local EXISTING_NAT=$(gcloud compute routers nats list --router=$router_name --router-region=$region --format="value(NAME)" | grep -o "^$NAT_NAME")
+
+  if [ -z "$EXISTING_NAT" ]; then
+    loading_icon 10 "* Stap 9/$global_staps:" &
+    gcloud compute routers nats create $NAT_NAME \
+      --router=$router_name \
+      --nat-all-subnet-ip-ranges \
+      --router-region=$region \
+      --auto-allocate-nat-external-ips > ./deployment-script.log 2>&1
+    local EXIT_CODE=$?
+    wait
+
+    if [ $EXIT_CODE -eq 0 ]; then success "Cloud NAT created successfully."; else error_exit "Failed to create the Cloud NAT."; fi
+  else
+    echo -n "* Stap 9/$global_staps:"
+    skip "Cloud NAT already exists. Skipping creation."
+  fi
+}
+
 # Functie: Create a new PostgreSQL instance if it doesn't already exist.
-function create_postgres_instance() { # Step 8
+function create_postgres_instance() { # Step 10
   local INSTANCE_NAME=db1
   local DATABASE_VERSION=POSTGRES_15
   local MACHINE_TYPE=db-f1-micro
   local EXISTING_INSTANCE=$(gcloud sql instances list --filter="name=$INSTANCE_NAME" --format="value(NAME)" 2>/dev/null)
 
   if [ -z "$EXISTING_INSTANCE" ]; then
-    loading_icon 500 "* Stap 8/$global_staps:" &
+    loading_icon 500 "* Stap 10/$global_staps:" &
     gcloud sql instances create $INSTANCE_NAME \
       --database-version=$DATABASE_VERSION \
       --tier=$MACHINE_TYPE \
@@ -237,19 +280,19 @@ function create_postgres_instance() { # Step 8
 
     if [ $EXIT_CODE -eq 0 ]; then success "Cloud SQL instance created successfully."; else error_exit "Failed to create the Cloud SQL instance."; fi
   else
-    echo -n "* Stap 8/$global_staps:"
+    echo -n "* Stap 10/$global_staps:"
     skip "Cloud SQL instance already exists. Skipping creation."
   fi
 }
 
 # Functie: Create a new PostgreSQL user if it doesn't already exist.
-function create_postgres_user() { # Step 9
+function create_postgres_user() { # Step 11
   local INSTANCE_NAME=db1
   local DATABASE_USER=admin
   local EXISTING_USER=$(gcloud sql users list --instance=$INSTANCE_NAME | grep -o "^$DATABASE_USER")
 
   if [ -z "$EXISTING_USER" ]; then
-    loading_icon 10 "* Stap 9/$global_staps:" &
+    loading_icon 10 "* Stap 11/$global_staps:" &
     gcloud sql users create $DATABASE_USER \
       --instance=$INSTANCE_NAME \
       --password=123 > ./deployment-script.log 2>&1
@@ -261,19 +304,19 @@ function create_postgres_user() { # Step 9
 
     if [ $EXIT_CODE -eq 0 ]; then success "Cloud SQL user created successfully."; else error_exit "Failed to create the Cloud SQL user."; fi
   else
-    echo -n "* Stap 9/$global_staps:"
+    echo -n "* Stap 11/$global_staps:"
     skip "Cloud SQL user already exists. Skipping creation."
   fi
 }
 
 # Functie: Create a new PostgreSQL database if it doesn't already exist.
-function create_postgres_database() { # Step 10
+function create_postgres_database() { # Step 12
   local INSTANCE_NAME=db1
   local DATABASE_NAME=codeforge
   local EXISTING_DATABASE=$(gcloud sql databases list --instance=$INSTANCE_NAME --format="value(NAME)" | grep -o "^$DATABASE_NAME")
 
   if [ -z "$EXISTING_DATABASE" ]; then
-    loading_icon 10 "* Stap 10/$global_staps:" &
+    loading_icon 10 "* Stap 12/$global_staps:" &
     gcloud sql databases create $DATABASE_NAME \
       --instance=$INSTANCE_NAME > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
@@ -281,17 +324,17 @@ function create_postgres_database() { # Step 10
 
     if [ $EXIT_CODE -eq 0 ]; then success "Cloud SQL database created successfully."; else error_exit "Failed to create the Cloud SQL database."; fi
   else
-    echo -n "* Stap 10/$global_staps:"
+    echo -n "* Stap 12/$global_staps:"
     skip "Cloud SQL database already exists. Skipping creation."
   fi
 }
 
 # Functie: Create a new GCloud Storage bucket if it doesn't already exist.
-function create_storage_bucket() { # Step 11
+function create_storage_bucket() { # Step 13
   local EXISTING_BUCKET=$(gsutil ls | grep -o "${bucket_name}")
 
   if [ -z "$EXISTING_BUCKET" ]; then
-    loading_icon 10 "* Step 11/$global_staps:" &
+    loading_icon 10 "* Step 13/$global_staps:" &
     gcloud storage buckets create $bucket_name \
       --location=$region > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
@@ -299,17 +342,17 @@ function create_storage_bucket() { # Step 11
 
     if [ $EXIT_CODE -eq 0 ]; then success "Cloud Storage bucket created successfully."; else error_exit "Failed to create the Cloud Storage bucket."; fi
   else
-    echo -n "* Step 11/$global_staps:"
+    echo -n "* Step 13/$global_staps:"
     skip "Cloud Storage bucket already exists. Skipping creation."
   fi
 }
 
 # Functie: Create a new service account if it doesn't already exist.
-function create_service_account() { # Step 12
+function create_service_account() { # Step 14
   local EXISTING_ACCOUNT=$(gcloud iam service-accounts list | grep -o "${user_email}")
 
   if [ -z "$EXISTING_ACCOUNT" ]; then
-    loading_icon 10 "* Step 12/$global_staps:" &
+    loading_icon 10 "* Step 14/$global_staps:" &
     gcloud iam service-accounts create $name_service_account \
       --display-name="CodeForge Service Account" \
       --description="Service account for CodeForge" > ./deployment-script.log 2>&1
@@ -318,18 +361,18 @@ function create_service_account() { # Step 12
 
     if [ $EXIT_CODE -eq 0 ]; then success "Service account created successfully."; else error_exit "Failed to create the service account."; fi
   else
-    echo -n "* Step 12/$global_staps:"
+    echo -n "* Step 14/$global_staps:"
     skip "Service account already exists. Skipping creation."
   fi
 }
 
 # Functie: Add permissions to the service account if it doesn't already have them.
-function add_permissions_to_service_account() { # Step 13
+function add_permissions_to_service_account() { # Step 15
   local ROLE="roles/storage.admin"
   local EXISTING_BINDINGS=$(gcloud projects get-iam-policy $projectid --flatten="bindings[].members" --format="value(bindings.members)" | grep -o "serviceAccount:${user_email}")
 
   if [ -z "$EXISTING_BINDINGS" ]; then
-    loading_icon 10 "* Step 13/$global_staps:" &
+    loading_icon 10 "* Step 15/$global_staps:" &
     gcloud projects add-iam-policy-binding $projectid \
       --member=serviceAccount:$user_email \
       --role=$ROLE > ./deployment-script.log 2>&1
@@ -338,13 +381,13 @@ function add_permissions_to_service_account() { # Step 13
 
     if [ $EXIT_CODE -eq 0 ]; then success "Permissions added to the service account successfully."; else error_exit "Failed to add permissions to the service account."; fi
   else
-    echo -n "* Step 13/$global_staps:"
+    echo -n "* Step 15/$global_staps:"
     skip "Permissions for the service account already exist. Skipping addition."
   fi
 }
 
 # Functie: Set the metadata if it doesn't already exist.
-function set_metadata() { # Step 14
+function set_metadata() { # Step 16
   local METADATA_VALUE1="-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
 QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
@@ -361,7 +404,7 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
 
   gcloud iam service-accounts keys create service-account-key.json --iam-account=$user_email > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
-  loading_icon 10 "* Step 14/$global_staps:" &
+  loading_icon 10 "* Step 16/$global_staps:" &
   gcloud compute project-info add-metadata --metadata="SSH-key-deployment=$METADATA_VALUE1,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE2,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE3,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE4,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE5,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE6,ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE7,ASPNETCORE_STORAGE_BUCKET=$bucket_name" > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
   gcloud compute project-info add-metadata --metadata=GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json > ./deployment-script.log 2>&1
@@ -373,7 +416,7 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
 }
 
 # Functie: Create a new instance template if it doesn't already exist.
-function create_instance_templates() { # Step 15
+function create_instance_templates() { # Step 17
   local MACHINE_TYPE=n1-standard-2
   local IMAGE_PROJECT=ubuntu-os-cloud
   local IMAGE_FAMILY=ubuntu-2004-lts
@@ -415,7 +458,7 @@ function create_instance_templates() { # Step 15
   local EXISTING_TEMPLATE=$(gcloud compute instance-templates list --format="value(NAME)" | grep -o "^$template_name")
 
   if [ -z "$EXISTING_TEMPLATE" ]; then
-    loading_icon 10 "* Stap 15/$global_staps:" &
+    loading_icon 10 "* Stap 17/$global_staps:" &
     gcloud compute instance-templates create $template_name \
       --machine-type=$MACHINE_TYPE \
       --image-project=$IMAGE_PROJECT \
@@ -428,13 +471,13 @@ function create_instance_templates() { # Step 15
 
     if [ $EXIT_CODE -eq 0 ]; then success "Instance template created successfully."; else error_exit "Failed to create the instance template."; fi
   else
-    echo -n "* Step 15/$global_staps:"
+    echo -n "* Step 17/$global_staps:"
     skip "Instance template already exists. Skipping creation."
   fi
 }
 
 # Functie: Create a new instance group if it doesn't already exist.
-function create_instance_group() { # Step 16
+function create_instance_group() { # Step 18
   local INSTANCE_GROUP_SIZE=1
   local MIN_REPLICAS=1
   local MAX_REPLICAS=5
@@ -443,7 +486,7 @@ function create_instance_group() { # Step 16
   local EXISTING_INSTANCE_GROUP=$(gcloud compute instance-groups list --format="value(NAME)" | grep -o "^$instance_group_name")
 
   if [ -z "$EXISTING_INSTANCE_GROUP" ]; then
-    loading_icon 20 "* Step 16/$global_staps:" &
+    loading_icon 20 "* Step 18/$global_staps:" &
     gcloud compute instance-groups managed create $instance_group_name \
       --base-instance-name=$instance_group_name \
       --size=$INSTANCE_GROUP_SIZE \
@@ -461,13 +504,13 @@ function create_instance_group() { # Step 16
 
     if [ $EXIT_CODE -eq 0 ]; then success "Instance group created successfully."; else error_exit "Failed to create the instance group."; fi
   else
-    echo -n "* Step 16/$global_staps:"
+    echo -n "* Step 18/$global_staps:"
     skip "Instance group already exists. Skipping creation."
   fi
 }
 
 # Functie: Create a new load balancer if it doesn't already exist.
-function create_load_balancer() { # Step 17
+function create_load_balancer() { # Step 19
   local BACKEND_SERVICE_NAME=codeforge-backend-service
   local HEALTH_CHECK_NAME=codeforge-health-check
   local URL_MAP_NAME=codeforge-url-map
@@ -476,7 +519,7 @@ function create_load_balancer() { # Step 17
   local EXISTING_LOAD_BALANCER=$(gcloud compute forwarding-rules list --format="value(NAME)" | grep -o "^$FORWARDING_RULE_NAME")
 
   if [ -z "$EXISTING_LOAD_BALANCER" ]; then
-    loading_icon 20 "* Step 17/$global_staps:" &
+    loading_icon 20 "* Step 19/$global_staps:" &
     # Create a health check
     gcloud compute health-checks create http $HEALTH_CHECK_NAME --port=5000 > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
@@ -516,7 +559,7 @@ function create_load_balancer() { # Step 17
       error_exit "Failed to create the load balancer."; 
     fi
   else
-    echo -n "* Step 17/$global_staps:"
+    echo -n "* Step 19/$global_staps:"
     skip "Load balancer already exists. Skipping creation."
   fi
 }
@@ -557,16 +600,18 @@ function create_infrastructure { # Choice 1 and 3
   create_network; wait                        # Step 5
   create_network_subnet; wait                 # Step 6
   create_firewallrule; wait                   # Step 7
-  create_postgres_instance; wait              # Step 8
-  create_postgres_user; wait                  # Step 9
-  create_postgres_database; wait              # Step 10
-  create_storage_bucket; wait                 # Step 11
-  create_service_account; wait                # Step 12
-  add_permissions_to_service_account; wait    # Step 13
-  set_metadata; wait                          # Step 14
-  create_instance_templates; wait             # Step 15
-  create_instance_group; wait                 # Step 16
-  create_load_balancer; wait                  # Step 17
+  create_router; wait                         # Step 8
+  create_nat; wait                            # Step 9
+  create_postgres_instance; wait              # Step 10
+  create_postgres_user; wait                  # Step 11
+  create_postgres_database; wait              # Step 12
+  create_storage_bucket; wait                 # Step 13
+  create_service_account; wait                # Step 14
+  add_permissions_to_service_account; wait    # Step 15
+  set_metadata; wait                          # Step 16
+  create_instance_templates; wait             # Step 17
+  create_instance_group; wait                 # Step 18
+  create_load_balancer; wait                  # Step 19
 }
 
 # Functie: Delete the project if it exists.
