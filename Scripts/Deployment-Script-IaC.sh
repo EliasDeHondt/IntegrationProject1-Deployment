@@ -5,6 +5,8 @@
 # @since 01/03/2024        #
 ############################
 # FUNCTIE: This script is used to deploy the infrastructure for the CodeForge project. Or delete the infrastructure.
+
+# Default Script variables.
 reset='\e[0m'
 rood='\e[0;31m'
 blauw='\e[0;34m'
@@ -460,7 +462,7 @@ function set_metadata() { # Step 18
 
 # Functie: Create a new instance template if it doesn't already exist.
 function create_instance_templates() { # Step 19
-  local MACHINE_TYPE=n1-standard-2
+  local MACHINE_TYPE=n1-standard-4
   local IMAGE_PROJECT=ubuntu-os-cloud
   local IMAGE_FAMILY=ubuntu-2004-lts
   local STARTUP_SCRIPT=$(cat Startup-Script-Gcloud-VM.sh)
