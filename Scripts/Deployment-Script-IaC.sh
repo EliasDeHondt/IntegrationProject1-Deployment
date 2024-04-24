@@ -438,7 +438,7 @@ function add_permissions_to_service_account() { # Step 17
 }
 
 # Functie: Set the metadata if it doesn't already exist.
-function set_metadata() { # Step 18
+function set_metadata() { # Step 17
   local METADATA_VALUE1="-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
 QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
@@ -452,13 +452,14 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
   local METADATA_VALUE5="codeforge"
   local METADATA_VALUE6="admin"
   local METADATA_VALUE7="123"
+  local METADATA_VALUE8=$(cat service-account-key.json)
 
   gcloud iam service-accounts keys create service-account-key.json --iam-account=$user_email > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
   loading_icon 10 "* Step 18/$global_staps:" &
-  gcloud compute project-info add-metadata --metadata="SSH-key-deployment=$METADATA_VALUE1,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE2,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE3,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE4,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE5,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE6,ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE7,ASPNETCORE_STORAGE_BUCKET=$bucket_name" > ./deployment-script.log 2>&1
+  gcloud compute project-info add-metadata --metadata="SSH-key-deployment='$METADATA_VALUE1',ASPNETCORE_ENVIRONMENT='$METADATA_VALUE2',ASPNETCORE_POSTGRES_HOST='$METADATA_VALUE3',ASPNETCORE_POSTGRES_PORT='$METADATA_VALUE4',ASPNETCORE_POSTGRES_DATABASE='$METADATA_VALUE5',ASPNETCORE_POSTGRES_USER='$METADATA_VALUE6',ASPNETCORE_POSTGRES_PASSWORD='$METADATA_VALUE7',ASPNETCORE_STORAGE_BUCKET='$bucket_name'" > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
-  gcloud compute project-info add-metadata --metadata=GOOGLE_APPLICATION_CREDENTIALS=$(cat service-account-key.json) > ./deployment-script.log 2>&1
+  gcloud compute project-info add-metadata --metadata="GOOGLE_APPLICATION_CREDENTIALS='$METADATA_VALUE8'" > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
   wait
 
