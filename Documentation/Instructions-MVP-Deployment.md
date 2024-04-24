@@ -25,7 +25,7 @@ This document will guide you through the process of deploying the MVP of the Cod
 
 ### 👉Step 0: Preparations
 
-- Insall the Google Cloud CLI [Instructions GCloud CLI](https://github.com/EliasDeHondt/IntegrationProject1-Deployment/blob/main/Documentation/Instructions-GCloud-CLI.md)
+- Insall the Google Cloud CLI [Instructions GCloud CLI](https://github.com/EliasDH-com/Documentation/blob/main/Documentation/Instructions-GCloud-CLI.md)
 
 ### 👉Step 1: Create Environment / Project
 
