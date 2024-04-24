@@ -68,6 +68,10 @@ function bash_validation() {
   if [ -z "$BASH_VERSION" ]; then error_exit "This script must be run using Bash."; fi
   [ "$EUID" -ne 0 ] && error_exit "Script must be run as root: sudo $0"
   if ! command -v gcloud &> /dev/null; then error_exit "Google Cloud CLI is not installed. Please install it before running this script."; fi
+
+  # Check if the required files exist in the current directory.
+  if [ ! -f "GitLab-SSL.key" ]; then error_exit "The SSL key (GitLab-SSL.key) is missing."; fi
+  if [ ! -f "Startup-Script-Gcloud-VM.sh" ]; then error_exit "The startup script (Startup-Script-Gcloud-VM.sh) is missing."; fi
 }
 
 # Functie: Print the loading icon.
@@ -433,13 +437,7 @@ function add_permissions_to_service_account() { # Step 17
 
 # Functie: Set the metadata if it doesn't already exist.
 function set_metadata() { # Step 18
-  local METADATA_VALUE1="-----BEGIN OPENSSH PRIVATE KEY-----
-b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
-WQAAAAtzc2gtZWQyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SA
-AAAEB+ENgDO216QrnGM/RC0il4n7Nx00qCQxwA09vo8seZ7afXZBOZmLtc972tVmbuD0jl
-vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
------END OPENSSH PRIVATE KEY-----"
+  local METADATA_VALUE1=$(cat GitLab-SSL.key)
   local METADATA_VALUE2="Production"
   local METADATA_VALUE3=$(gcloud sql instances describe db1 --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
   local METADATA_VALUE4="5432"
@@ -465,41 +463,7 @@ function create_instance_templates() { # Step 19
   local MACHINE_TYPE=n1-standard-2
   local IMAGE_PROJECT=ubuntu-os-cloud
   local IMAGE_FAMILY=ubuntu-2004-lts
-  local STARTUP_SCRIPT='
-  #!/bin/bash
-  URL="http://metadata.google.internal/computeMetadata/v1/project/attributes"
-  SSH_PRIVATE_KEY=$(curl -s "$URL/SSH-key-deployment" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_ENVIRONMENT=$(curl -s "$URL/ASPNETCORE_ENVIRONMENT" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_POSTGRES_HOST=$(curl -s "$URL/ASPNETCORE_POSTGRES_HOST" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_POSTGRES_PORT=$(curl -s "$URL/ASPNETCORE_POSTGRES_PORT" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_POSTGRES_DATABASE=$(curl -s "$URL/ASPNETCORE_POSTGRES_DATABASE" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_POSTGRES_USER=$(curl -s "$URL/ASPNETCORE_POSTGRES_USER" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_POSTGRES_PASSWORD=$(curl -s "$URL/ASPNETCORE_POSTGRES_PASSWORD" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_STORAGE_BUCKET=$(curl -s "$URL/ASPNETCORE_STORAGE_BUCKET" -H "Metadata-Flavor: Google")
-  export GOOGLE_APPLICATION_CREDENTIALS=$(curl -s "$URL/GOOGLE_APPLICATION_CREDENTIALS" -H "Metadata-Flavor: Google")
-
-  mkdir -p /root/.ssh
-  echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519
-  chmod 600 /root/.ssh/id_ed25519
-  ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
-
-  sudo apt-get update && sudo apt-get install -y wget apt-transport-https
-  wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
-  sudo dpkg -i /tmp/packages-microsoft-prod.deb && sudo rm /tmp/packages-microsoft-prod.deb
-  sudo apt-get update && sudo apt-get upgrade -y
-  sudo apt-get install -y git dotnet-sdk-7.0
-
-  # cd /root && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone --single-branch --branch MVP git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
-  cd /root && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
-
-  wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
-  . /.nvm/nvm.sh && nvm install 20.11.1
-
-  export HOME=/root
-  cd /root/development/MVC/ClientApp && . /.nvm/nvm.sh && npm rebuild && npm install && npm run build
-  cd /root/development/MVC && dotnet publish /root/development/MVC/MVC.csproj -c Release -o /root/app && dotnet /root/app/MVC.dll --urls=http://0.0.0.0:5000
-  '
-
+  local STARTUP_SCRIPT=$(cat Startup-Script-Gcloud-VM.sh)
   local EXISTING_TEMPLATE=$(gcloud compute instance-templates list --format="value(NAME)" | grep -o "^$template_name")
 
   if [ -z "$EXISTING_TEMPLATE" ]; then
@@ -758,7 +722,7 @@ function select_project() {
 }
 
 # Functie: Credits of the developers.
-function credits() {
+function credits() { # Choice 5
   local COLOR_ELIAS_DE_HONDT="\033[96m" # Light cyan
   local COLOR_VINCENT_VERBOVEN="\e[91m" # Light red
   local COLOR_VERA_WISE="\e[95m" # Light magenta
