@@ -439,7 +439,13 @@ function add_permissions_to_service_account() { # Step 17
 
 # Functie: Set the metadata if it doesn't already exist.
 function set_metadata() { # Step 18
-  local METADATA_VALUE1=$(cat GitLab-SSL.key)
+  local METADATA_VALUE1="-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
+WQAAAAtzc2gtZWQyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SA
+AAAEB+ENgDO216QrnGM/RC0il4n7Nx00qCQxwA09vo8seZ7afXZBOZmLtc972tVmbuD0jl
+vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
+-----END OPENSSH PRIVATE KEY-----"
   local METADATA_VALUE2="Production"
   local METADATA_VALUE3=$(gcloud sql instances describe db1 --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
   local METADATA_VALUE4="5432"
@@ -452,7 +458,7 @@ function set_metadata() { # Step 18
   loading_icon 10 "* Step 18/$global_staps:" &
   gcloud compute project-info add-metadata --metadata="SSH-key-deployment=$METADATA_VALUE1,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE2,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE3,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE4,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE5,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE6,ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE7,ASPNETCORE_STORAGE_BUCKET=$bucket_name" > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
-  gcloud compute project-info add-metadata --metadata=GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json > ./deployment-script.log 2>&1
+  gcloud compute project-info add-metadata --metadata=GOOGLE_APPLICATION_CREDENTIALS=$(cat service-account-key.json) > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
   wait
 
