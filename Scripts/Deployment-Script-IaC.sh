@@ -33,7 +33,7 @@ domain_name=codeforge.eliasdh.com
 
 # Functie: Error afhandeling.
 function error_exit() {
-  echo -e "*\n* ${rood}$1${reset}\n*\n* Exiting script.\n${line}"
+  echo -e "\n*\n* ${rood}$1${reset}\n*\n* Exiting script.\n${line}"
   exit 1
 }
 
