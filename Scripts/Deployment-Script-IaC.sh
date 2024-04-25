@@ -70,10 +70,6 @@ function bash_validation() {
   if [ -z "$BASH_VERSION" ]; then error_exit "This script must be run using Bash."; fi
   [ "$EUID" -ne 0 ] && error_exit "Script must be run as root: sudo $0"
   if ! command -v gcloud &> /dev/null; then error_exit "Google Cloud CLI is not installed. Please install it before running this script."; fi
-
-  # Check if the required files exist in the current directory.
-  if [ ! -f "GitLab-SSL.key" ]; then error_exit "The SSL key (GitLab-SSL.key) is missing."; fi
-  if [ ! -f "Startup-Script-Gcloud-VM.sh" ]; then error_exit "The startup script (Startup-Script-Gcloud-VM.sh) is missing."; fi
 }
 
 # Functie: Print the loading icon.
