@@ -24,7 +24,7 @@ network_name=codeforge-network
 subnet_name=codeforge-subnet
 router_name=codforge-router-$datetime
 peering_name=codeforge-peering-$datetime
-name_service_account="codeforge-service-account"
+name_service_account=codeforge-service-account
 instance_group_name=codeforge-instance-group
 user_email="${name_service_account}@${projectid}.iam.gserviceaccount.com"
 bucket_name=gs://codeforge-video-bucket-$datetime/
@@ -451,12 +451,11 @@ vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
 
   gcloud iam service-accounts keys create service-account-key.json --iam-account=$user_email > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
-  local METADATA_VALUE8=$(cat service-account-key.json)
 
   loading_icon 10 "* Step 18/$global_staps:" &
   gcloud compute project-info add-metadata --metadata="SSH-key-deployment=$METADATA_VALUE1,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE2,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE3,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE4,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE5,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE6,ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE7,ASPNETCORE_STORAGE_BUCKET=$bucket_name" > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
-  gcloud compute project-info add-metadata --metadata=GOOGLE_APPLICATION_CREDENTIALS="$METADATA_VALUE8" > ./deployment-script.log 2>&1
+  gcloud compute project-info add-metadata --metadata-from-file GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
   wait
 
