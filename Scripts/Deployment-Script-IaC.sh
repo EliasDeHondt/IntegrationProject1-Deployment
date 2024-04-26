@@ -7,7 +7,7 @@
 # FUNCTIE: This script is used to deploy the infrastructure for the CodeForge project. Or delete the infrastructure.
 
 # Get all the variables from the config file.
-source ./variables.conf
+source ./Variables.conf
 
 # Functie: Error afhandeling.
 function error_exit() {
@@ -56,7 +56,7 @@ function bash_validation() {
 
   # Check if the startup script exists.
   if [ ! -f "./Startup-Script-Gcloud-DotNet.sh" ]; then error_exit "Startup script not found."; fi
-  if [ ! -f "./variables.conf" ]; then error_exit "Variables file not found."; fi
+  if [ ! -f "./Variables.conf" ]; then error_exit "Variables file not found."; fi
 }
 
 # Functie: Print the loading icon.
