@@ -45,18 +45,6 @@ Please also see following documents:
 ### 📚References
 - [DotNet Hello World](https://github.com/EliasDeHondt/DotNet-HelloWorld)
 
-### 🔑Generate SSH key
-
-```bash
-ssh-keygen -t ed25519 -C "elias.dehondt@student.kdg.be"
-# /home/elias/id_rsa
-# cat /home/elias/id_rsa
-# cat /home/elias/id_rsa.pub
-# Add ssh key to ssh-agent
-eval "$(ssh-agent -s)"
-ssh-add /home/elias/id_rsa
-```
-
 ## 🔗Links
 - 👯 Web hosting company [EliasDH.com](https://eliasdh.com).
 - 📫 How to reach us elias.dehondt@outlook.com.

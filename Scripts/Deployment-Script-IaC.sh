@@ -6,30 +6,8 @@
 ############################
 # FUNCTIE: This script is used to deploy the infrastructure for the CodeForge project. Or delete the infrastructure.
 
-# Default Script variables.
-reset='\e[0m'
-rood='\e[0;31m'
-blauw='\e[0;34m'
-yellow='\e[0;33m'
-groen='\e[0;32m'
-global_staps=21
-datetime=$(date +%Y%m%d%H%M%S)
-
-# Default GCloud variables.
-projectid=codeforge-$datetime # projectid="codeforge-projectid"
-region=us-central1
-zone=us-central1-c
-template_name=codeforge-template
-network_name=codeforge-network
-subnet_name=codeforge-subnet
-router_name=codforge-router-$datetime
-peering_name=codeforge-peering-$datetime
-name_service_account=codeforge-service-account
-instance_group_name=codeforge-instance-group
-user_email="${name_service_account}@${projectid}.iam.gserviceaccount.com"
-bucket_name=gs://codeforge-video-bucket-$datetime/
-domain_name=codeforge.eliasdh.com
-
+# Get all the variables from the config file.
+source ./variables.conf
 
 # Functie: Error afhandeling.
 function error_exit() {
@@ -67,9 +45,17 @@ function banner_message() {
 
 # Functie: Bash validatie.
 function bash_validation() {
+  # Check if the script is run using Bash.
   if [ -z "$BASH_VERSION" ]; then error_exit "This script must be run using Bash."; fi
+
+  # Check if the script is run as root.
   [ "$EUID" -ne 0 ] && error_exit "Script must be run as root: sudo $0"
+
+  # Check if the Google Cloud CLI is installed.
   if ! command -v gcloud &> /dev/null; then error_exit "Google Cloud CLI is not installed. Please install it before running this script."; fi
+
+  # Check if the startup script exists.
+  if [ ! -f "./Startup-Script-Gcloud-DotNet.sh" ]; then error_exit "Startup script not found."; fi
 }
 
 # Functie: Print the loading icon.
@@ -435,25 +421,20 @@ function add_permissions_to_service_account() { # Step 17
 
 # Functie: Set the metadata if it doesn't already exist.
 function set_metadata() { # Step 17
-  local METADATA_VALUE1="-----BEGIN OPENSSH PRIVATE KEY-----
-b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-QyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SAAAAKDaNOpZ2jTq
-WQAAAAtzc2gtZWQyNTUxOQAAACCn12QTmZi7XPe9rVZm7g9I5b2Lf7tBCNxSa5on6eo/SA
-AAAEB+ENgDO216QrnGM/RC0il4n7Nx00qCQxwA09vo8seZ7afXZBOZmLtc972tVmbuD0jl
-vYt/u0EI3FJrmifp6j9IAAAAHGVsaWFzLmRlaG9uZHRAc3R1ZGVudC5rZGcuYmUB
------END OPENSSH PRIVATE KEY-----"
-  local METADATA_VALUE2="Production"
-  local METADATA_VALUE3=$(gcloud sql instances describe db1 --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
-  local METADATA_VALUE4="5432"
-  local METADATA_VALUE5="codeforge"
-  local METADATA_VALUE6="admin"
-  local METADATA_VALUE7="123"
+  local GITLAB_USERNAME="gitlab+deploy-token-4204945"
+  local GITLAB_TOKEN="gldt-Dmq-B8x1iiMrAh6J2bGZ"
+  local METADATA_VALUE1="Production"
+  local METADATA_VALUE2=$(gcloud sql instances describe db1 --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
+  local METADATA_VALUE3="5432"
+  local METADATA_VALUE4="codeforge"
+  local METADATA_VALUE5="admin"
+  local METADATA_VALUE6="123"
 
   gcloud iam service-accounts keys create service-account-key.json --iam-account=$user_email > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
 
   loading_icon 10 "* Step 18/$global_staps:" &
-  gcloud compute project-info add-metadata --metadata="SSH-key-deployment=$METADATA_VALUE1,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE2,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE3,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE4,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE5,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE6,ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE7,ASPNETCORE_STORAGE_BUCKET=$bucket_name" > ./deployment-script.log 2>&1
+  gcloud compute project-info add-metadata --metadata="GITLAB_USERNAME=$GITLAB_USERNAME,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE1,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE2,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE3,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE4,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE5,ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE6,ASPNETCORE_STORAGE_BUCKET=$bucket_name" > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
   gcloud compute project-info add-metadata --metadata-from-file GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
@@ -468,41 +449,6 @@ function create_instance_templates() { # Step 17
   local MACHINE_TYPE=n1-standard-2
   local IMAGE_PROJECT=ubuntu-os-cloud
   local IMAGE_FAMILY=ubuntu-2004-lts
-  local STARTUP_SCRIPT='
-  #!/bin/bash
-  URL="http://metadata.google.internal/computeMetadata/v1/project/attributes"
-  SSH_PRIVATE_KEY=$(curl -s "$URL/SSH-key-deployment" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_ENVIRONMENT=$(curl -s "$URL/ASPNETCORE_ENVIRONMENT" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_POSTGRES_HOST=$(curl -s "$URL/ASPNETCORE_POSTGRES_HOST" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_POSTGRES_PORT=$(curl -s "$URL/ASPNETCORE_POSTGRES_PORT" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_POSTGRES_DATABASE=$(curl -s "$URL/ASPNETCORE_POSTGRES_DATABASE" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_POSTGRES_USER=$(curl -s "$URL/ASPNETCORE_POSTGRES_USER" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_POSTGRES_PASSWORD=$(curl -s "$URL/ASPNETCORE_POSTGRES_PASSWORD" -H "Metadata-Flavor: Google")
-  export ASPNETCORE_STORAGE_BUCKET=$(curl -s "$URL/ASPNETCORE_STORAGE_BUCKET" -H "Metadata-Flavor: Google")
-  export GOOGLE_APPLICATION_CREDENTIALS=$(curl -s "$URL/GOOGLE_APPLICATION_CREDENTIALS" -H "Metadata-Flavor: Google")
-
-  mkdir -p /root/.ssh
-  echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519
-  chmod 600 /root/.ssh/id_ed25519
-  ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
-
-  sudo apt-get update && sudo apt-get install -y wget apt-transport-https
-  wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
-  sudo dpkg -i /tmp/packages-microsoft-prod.deb && sudo rm /tmp/packages-microsoft-prod.deb
-  sudo apt-get update && sudo apt-get upgrade -y
-  sudo apt-get install -y git dotnet-sdk-7.0
-
-  # cd /root && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone --single-branch --branch MVP git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
-  cd /root && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone git@gitlab.com:kdg-ti/integratieproject-1/202324/23_codeforge/development.git
-
-  wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
-  . /.nvm/nvm.sh && nvm install 20.11.1
-
-  export HOME=/root
-  cd /root/development/MVC/ClientApp && . /.nvm/nvm.sh && npm rebuild && npm install && npm run build
-  cd /root/development/MVC && dotnet publish /root/development/MVC/MVC.csproj -c Release -o /root/app && dotnet /root/app/MVC.dll --urls=http://0.0.0.0:5000
-  '
-
   local EXISTING_TEMPLATE=$(gcloud compute instance-templates list --format="value(NAME)" | grep -o "^$template_name")
 
   if [ -z "$EXISTING_TEMPLATE" ]; then
@@ -513,7 +459,7 @@ function create_instance_templates() { # Step 17
       --image-family=$IMAGE_FAMILY \
       --no-address \
       --subnet=projects/$projectid/regions/$region/subnetworks/$subnet_name \
-      --metadata=startup-script="$STARTUP_SCRIPT" > ./deployment-script.log 2>&1
+      --metadata-from-file=startup-script=Startup-Script-Gcloud-DotNet.sh > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
     wait
 
