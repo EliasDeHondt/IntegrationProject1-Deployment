@@ -46,7 +46,7 @@ This document will guide you through the process of deploying the entire infrast
     ```
 - Run the [Deployment Script IaC](/Scripts/Deployment-Script-IaC.sh)
     ```bash
-    chmod +x Deployment-Script-IaC.sh
+    sudo chmod +x Deployment-Script-IaC.sh
     sudo ./Deployment-Script-IaC.sh
     ```
 > ***The script will do the rest!***
