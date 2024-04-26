@@ -56,6 +56,7 @@ function bash_validation() {
 
   # Check if the startup script exists.
   if [ ! -f "./Startup-Script-Gcloud-DotNet.sh" ]; then error_exit "Startup script not found."; fi
+  if [ ! -f "./variables.conf" ]; then error_exit "Variables file not found."; fi
 }
 
 # Functie: Print the loading icon.
