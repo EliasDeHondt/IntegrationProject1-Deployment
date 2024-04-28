@@ -24,7 +24,7 @@ sudo dpkg -i /tmp/packages-microsoft-prod.deb && sudo rm /tmp/packages-microsoft
 sudo apt-get update && sudo apt-get upgrade -y
 sudo apt-get install -y git dotnet-sdk-7.0
 
-cd /root && git clone -b MVP https://$GITLAB_USERNAME:$GITLAB_TOKEN@gitlab.com/kdg-ti/integratieproject-1/202324/23_codeforge/development.git
+cd /root && git clone https://$GITLAB_USERNAME:$GITLAB_TOKEN@gitlab.com/kdg-ti/integratieproject-1/202324/23_codeforge/development.git
 
 wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
 . /.nvm/nvm.sh && nvm install 20.11.1

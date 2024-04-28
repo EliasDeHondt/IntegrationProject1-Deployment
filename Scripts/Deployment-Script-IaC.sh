@@ -573,14 +573,14 @@ function create_infrastructure { # Choice 1 and 3
     if [ -z "$domain_name" ] || [ -z "$region" ] || [ -z "$zone" ]; then error_exit "Please enter all the required variables."; fi
   elif [ "$var_choice" == "n" ]; then
     echo -e "*"
-    echo -n "* ${geel}Using the default variables.${reset}"
+    echo -en "* ${geel}Using the default variables.${reset}"
   else
     error_exit "Invalid choice."
   fi
 
   # Asking for the choice of Debian or Ubuntu for VMs.
   banner_message "Creating the infrastructure."
-  echo -e "\n*"
+  echo -e "*"
   echo -e "* Which OS do you want to use for the VMs? (Default: Ubuntu):\n* ${blauw}[1]${reset} Ubuntu\n* ${blauw}[2]${reset} Debian\n*"
   read -p "* Enter your choice: " os_choice
   if [ "$os_choice" == "1" ] || [ -z "$os_choice" ]; then
