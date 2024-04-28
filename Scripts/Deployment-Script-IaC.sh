@@ -45,6 +45,8 @@ function banner_message() {
 
 # Functie: Bash validatie.
 function bash_validation() {
+  touch ./deployment-script.log
+
   # Check if the script is run using Bash.
   if [ -z "$BASH_VERSION" ]; then error_exit "This script must be run using Bash."; fi
 
@@ -55,8 +57,11 @@ function bash_validation() {
   if ! command -v gcloud &> /dev/null; then error_exit "Google Cloud CLI is not installed. Please install it before running this script."; fi
 
   # Check if the startup script exists.
-  if [ ! -f "./Startup-Script-Gcloud-DotNet.sh" ]; then error_exit "Startup script not found."; fi
+  if [ ! -f "./deployment-script.log" ]; then error_exit "Failed to create the log file."; fi
   if [ ! -f "./Variables.conf" ]; then error_exit "Variables file not found."; fi
+  if [ ! -f "./Startup-Script-Gcloud-DotNet-Ubuntu.sh" ]; then error_exit "Startup script for Ubuntu not found."; fi
+  if [ ! -f "./Startup-Script-Gcloud-DotNet-Debian.sh" ]; then error_exit "Startup script for Debian not found."; fi
+
 }
 
 # Functie: Print the loading icon.
@@ -329,7 +334,7 @@ function create_postgres_user() { # Step 13
     loading_icon 10 "* Stap 13/$global_staps:" &
     gcloud sql users create $DATABASE_USER \
       --instance=$INSTANCE_NAME \
-      --password=123 > ./deployment-script.log 2>&1
+      --password=$db_password > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
     gcloud sql users delete postgres \
       --instance=$INSTANCE_NAME --quiet > ./deployment-script.log 2>&1
@@ -429,13 +434,12 @@ function set_metadata() { # Step 17
   local METADATA_VALUE3="5432"
   local METADATA_VALUE4="codeforge"
   local METADATA_VALUE5="admin"
-  local METADATA_VALUE6="123"
 
   gcloud iam service-accounts keys create service-account-key.json --iam-account=$user_email > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
 
   loading_icon 10 "* Step 18/$global_staps:" &
-  gcloud compute project-info add-metadata --metadata="GITLAB_USERNAME=$GITLAB_USERNAME,GITLAB_TOKEN=$GITLAB_TOKEN,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE1,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE2,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE3,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE4,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE5,ASPNETCORE_POSTGRES_PASSWORD=$METADATA_VALUE6,ASPNETCORE_STORAGE_BUCKET=$bucket_name" > ./deployment-script.log 2>&1
+  gcloud compute project-info add-metadata --metadata="GITLAB_USERNAME=$GITLAB_USERNAME,GITLAB_TOKEN=$GITLAB_TOKEN,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE1,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE2,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE3,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE4,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE5,ASPNETCORE_POSTGRES_PASSWORD=$db_password,ASPNETCORE_STORAGE_BUCKET=$bucket_name" > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
   gcloud compute project-info add-metadata --metadata-from-file GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
@@ -447,22 +451,20 @@ function set_metadata() { # Step 17
 
 # Functie: Create a new instance template if it doesn't already exist.
 function create_instance_templates() { # Step 17
-  local MACHINE_TYPE=n1-standard-2
-  local IMAGE_PROJECT=ubuntu-os-cloud
-  local IMAGE_FAMILY=ubuntu-2004-lts
+  local MACHINE_TYPE=n1-standard-4
   local EXISTING_TEMPLATE=$(gcloud compute instance-templates list --format="value(NAME)" | grep -o "^$template_name")
 
   if [ -z "$EXISTING_TEMPLATE" ]; then
     loading_icon 10 "* Stap 17/$global_staps:" &
     gcloud compute instance-templates create $template_name \
       --machine-type=$MACHINE_TYPE \
-      --image-project=$IMAGE_PROJECT \
-      --image-family=$IMAGE_FAMILY \
+      --image-project=$image_project \
+      --image-family=$image_family \
       --no-address \
       --subnet=projects/$projectid/regions/$region/subnetworks/$subnet_name \
-      --metadata-from-file=startup-script=Startup-Script-Gcloud-DotNet.sh > ./deployment-script.log 2>&1
+      --metadata-from-file=startup-script=$startup_script > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
-    wait
+    wait  
 
     if [ $EXIT_CODE -eq 0 ]; then success "Instance template created successfully."; else error_exit "Failed to create the instance template."; fi
   else
@@ -518,23 +520,23 @@ function create_load_balancer() { # Step 21
     # Create a health check
     gcloud compute health-checks create http $HEALTH_CHECK_NAME --port=5000 > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
-    
+
     # Create a backend service
     gcloud compute backend-services create $BACKEND_SERVICE_NAME --protocol=HTTP --health-checks=$HEALTH_CHECK_NAME --global > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
-    
+
     # Add backend instance group to backend service
     gcloud compute backend-services add-backend $BACKEND_SERVICE_NAME --instance-group=$instance_group_name --instance-group-zone=$zone --global > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
-    
+
     # Set named ports
     gcloud compute instance-groups set-named-ports $instance_group_name --named-ports=http:5000 --zone=$zone > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
-    
+
     # Create a URL map
     gcloud compute url-maps create $URL_MAP_NAME --default-service=$BACKEND_SERVICE_NAME > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
-    
+
     # Create a SSL certificate
     gcloud compute ssl-certificates create codeforge-ssl-certificate --domains=$domain_name --global > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
@@ -542,17 +544,13 @@ function create_load_balancer() { # Step 21
     # Create a target HTTPS proxy
     gcloud compute target-https-proxies create $TARGET_PROXY_NAME --url-map=$URL_MAP_NAME --ssl-certificates=codeforge-ssl-certificate > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
-    
+
     # Create a forwarding rule
     gcloud compute forwarding-rules create $FORWARDING_RULE_NAME --global --target-https-proxy=$TARGET_PROXY_NAME --ports=443 > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
     wait
 
-    if [ $EXIT_CODE -eq 0 ]; then 
-      success "Load balancer created successfully."; 
-    else 
-      error_exit "Failed to create the load balancer."; 
-    fi
+    if [ $EXIT_CODE -eq 0 ]; then success "Load balancer created successfully."; else error_exit "Failed to create the load balancer."; fi
   else
     echo -n "* Step 21/$global_staps:"
     skip "Load balancer already exists. Skipping creation."
@@ -561,9 +559,10 @@ function create_load_balancer() { # Step 21
 
 # Functie: Create the infrastructure.
 function create_infrastructure { # Choice 1 and 3
+  # Asking for the choice of overriding the default variables.
   echo -e "*"
-  read -p "* Do you want to override the default variables? (Y/n): " configure
-  if [ "$configure" == "Y" ] || [ "$configure" == "y" ] || [ -z "$configure" ]; then
+  read -p "* Do you want to override the default variables? (Y/n): " var_choice
+  if [ "$var_choice" == "Y" ] || [ "$var_choice" == "y" ] || [ -z "$var_choice" ]; then
     echo -e "*"
     echo -n "* Enter the domain name: "
     read domain_name
@@ -572,13 +571,36 @@ function create_infrastructure { # Choice 1 and 3
     echo -n "* Enter the zone: "
     read zone
     if [ -z "$domain_name" ] || [ -z "$region" ] || [ -z "$zone" ]; then error_exit "Please enter all the required variables."; fi
-  elif [ "$configure" == "n" ]; then
+  elif [ "$var_choice" == "n" ]; then
     echo -e "*"
-    echo -n "* Using the default variables."
+    echo -n "* ${geel}Using the default variables.${reset}"
   else
     error_exit "Invalid choice."
   fi
-  
+
+  # Asking for the choice of Debian or Ubuntu for VMs.
+  banner_message "Creating the infrastructure."
+  echo -e "\n*"
+  echo -e "* Which OS do you want to use for the VMs? (Default: Ubuntu):\n* ${blauw}[1]${reset} Ubuntu\n* ${blauw}[2]${reset} Debian\n*"
+  read -p "* Enter your choice: " os_choice
+  if [ "$os_choice" == "1" ] || [ -z "$os_choice" ]; then
+    image_project=ubuntu-os-cloud
+    image_family=ubuntu-2004-lts
+    startup_script=Startup-Script-Gcloud-DotNet-Ubuntu.sh
+  elif [ "$os_choice" == "2" ]; then
+    image_project=debian-cloud
+    image_family=debian-10
+    startup_script=Startup-Script-Gcloud-DotNet-Debian.sh
+  else
+    error_exit "Invalid choice."
+  fi
+
+  # Asking for database password.
+  banner_message "Creating the infrastructure."
+  echo -e "*"
+  read -p "* Enter the database password: " db_password
+  if [ -z "$db_password" ]; then error_exit "Please enter the database password."; fi
+
   if [ $1 -eq 0 ]; then
     banner_message "Creating the infrastructure."
     create_project; wait                        # Step 1
@@ -589,7 +611,7 @@ function create_infrastructure { # Choice 1 and 3
     banner_message "Updating the infrastructure."
     echo -e "*\n* ${yellow}Skipping steps 1 and 2.${reset}\n*"
   fi
-  
+
   link_billing_account; wait                  # Step 3
   enable_apis; wait                           # Step 4
   create_network; wait                        # Step 5
@@ -688,7 +710,7 @@ function view_dashboard() { # Choice 4
 # Function: Select a project and set it as the current project.
 function select_project() {
   echo -e "*\n* Available projects:"
-  gcloud projects list --format="value(projectId)" | nl -w 3 -s "] " | while read -r line; do echo -e "*   [$line"; done
+  gcloud projects list --format="value(projectId)" | nl -w 3 -s "]${reset} " | while read -r line; do echo -e "*   ${blauw}[$line"; done
   echo -e "*\n* Enter the project number or ID: \c"
   read project_input
   if [[ "$project_input" =~ ^[0-9]+$ ]]; then
@@ -739,7 +761,6 @@ function credits() { # Choice 5
 function main { # Start the script.
   banner_message "Welcome to the CodeForge deployment script!"
   bash_validation
-  touch ./deployment-script.log
 
   echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Update the infrastructure\n* ${blauw}[3]${reset} Delete the infrastructures\n* ${blauw}[4]${reset} View dashboard\n* ${blauw}[5]${reset} Credits\n* ${blauw}[6]${reset} Exit"
   read -p "* Enter the number of your choice: " choice
