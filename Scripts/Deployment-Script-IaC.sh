@@ -707,6 +707,26 @@ function view_dashboard() { # Choice 4
   done
 }
 
+# Functie: Send support message via Discord.
+function send_support_message() { # Choice 5
+  local WEBHOOK_URL="https://discord.com/api/webhooks/1234178845838413864/R8MEa3bwW91csJ_z1m5N4BG28BZmnBhvqakwI9V6QwufUflfF6fHR3l9RjNYq0ZO779F"
+  local MESSAGE="Support message from the CodeForge deployment script. Please help me with the following issue:"
+
+  echo -e "*"
+  read -p "* Enter your first name: " first_name
+  read -p "* Enter your last name: " last_name
+  read -p "* Enter your email address: " email
+  read -p "* Enter your message: " message
+
+  curl -X POST -H "Content-Type: application/json" -d "{\"content\": \"$MESSAGE\n\n**Name:** $first_name $last_name\n**Email:** $email\n**Message:** $message\"}" $WEBHOOK_URL > ./deployment-script.log 2>&1
+  echo -e "*n"
+  if [ $? -eq 0 ]; then success "Support message sent successfully."; else error_exit "Failed to send the support message."; fi
+
+  echo -e "${line}"
+  sleep 30
+  main
+} 
+
 # Function: Select a project and set it as the current project.
 function select_project() {
   echo -e "*\n* Available projects:"
@@ -730,7 +750,7 @@ function select_project() {
 }
 
 # Functie: Credits of the developers.
-function credits() { # Choice 5
+function credits() { # Choice 6
   local COLOR_ELIAS_DE_HONDT="\033[96m" # Light cyan
   local COLOR_VINCENT_VERBOVEN="\e[91m" # Light red
   local COLOR_VERA_WISE="\e[95m" # Light magenta
@@ -762,7 +782,7 @@ function main { # Start the script.
   banner_message "Welcome to the CodeForge deployment script!"
   bash_validation
 
-  echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Update the infrastructure\n* ${blauw}[3]${reset} Delete the infrastructures\n* ${blauw}[4]${reset} View dashboard\n* ${blauw}[5]${reset} Credits\n* ${blauw}[6]${reset} Exit"
+  echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Update the infrastructure\n* ${blauw}[3]${reset} Delete the infrastructures\n* ${blauw}[4]${reset} View dashboard\n* ${blauw}[5]${reset} Support\n* ${blauw}[6]${reset} Credits\n* ${blauw}[7]${reset} Exit"
   read -p "* Enter the number of your choice: " choice
   echo -e "*"
   if [ "$choice" == "1" ]; then
@@ -784,9 +804,12 @@ function main { # Start the script.
     select_project
     view_dashboard
   elif [ "$choice" == "5" ]; then
+    banner_message "          Support          "
+    send_support_message
+  elif [ "$choice" == "6" ]; then
     banner_message "          Credits          "
     credits
-  elif [ "$choice" == "6" ]; then
+  elif [ "$choice" == "7" ]; then
     success_exit "Exiting script."
   else
     error_exit "Invalid choice."
