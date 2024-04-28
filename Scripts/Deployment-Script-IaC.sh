@@ -559,49 +559,49 @@ function create_load_balancer() { # Step 21
 
 # Functie: Create the infrastructure.
 function create_infrastructure { # Choice 1 and 3
-  # Asking for the choice of overriding the default variables.
-  echo -e "*"
-  read -p "* Do you want to override the default variables? (Y/n): " var_choice
-  if [ "$var_choice" == "Y" ] || [ "$var_choice" == "y" ] || [ -z "$var_choice" ]; then
-    echo -e "*"
-    echo -n "* Enter the domain name: "
-    read domain_name
-    echo -n "* Enter the region: "
-    read region
-    echo -n "* Enter the zone: "
-    read zone
-    if [ -z "$domain_name" ] || [ -z "$region" ] || [ -z "$zone" ]; then error_exit "Please enter all the required variables."; fi
-  elif [ "$var_choice" == "n" ]; then
-    echo -e "*"
-    echo -en "* ${geel}Using the default variables.${reset}"
-  else
-    error_exit "Invalid choice."
-  fi
-
-  # Asking for the choice of Debian or Ubuntu for VMs.
-  banner_message "Creating the infrastructure."
-  echo -e "*"
-  echo -e "* Which OS do you want to use for the VMs? (Default: Ubuntu):\n* ${blauw}[1]${reset} Ubuntu\n* ${blauw}[2]${reset} Debian\n*"
-  read -p "* Enter your choice: " os_choice
-  if [ "$os_choice" == "1" ] || [ -z "$os_choice" ]; then
-    image_project=ubuntu-os-cloud
-    image_family=ubuntu-2004-lts
-    startup_script=Startup-Script-Gcloud-DotNet-Ubuntu.sh
-  elif [ "$os_choice" == "2" ]; then
-    image_project=debian-cloud
-    image_family=debian-10
-    startup_script=Startup-Script-Gcloud-DotNet-Debian.sh
-  else
-    error_exit "Invalid choice."
-  fi
-
-  # Asking for database password.
-  banner_message "Creating the infrastructure."
-  echo -e "*"
-  read -p "* Enter the database password: " db_password
-  if [ -z "$db_password" ]; then error_exit "Please enter the database password."; fi
-
   if [ $1 -eq 0 ]; then
+    # Asking for the choice of overriding the default variables.
+    echo -e "*"
+    read -p "* Do you want to override the default variables? (Y/n): " var_choice
+    if [ "$var_choice" == "Y" ] || [ "$var_choice" == "y" ] || [ -z "$var_choice" ]; then
+      echo -e "*"
+      echo -n "* Enter the domain name: "
+      read domain_name
+      echo -n "* Enter the region: "
+      read region
+      echo -n "* Enter the zone: "
+      read zone
+      if [ -z "$domain_name" ] || [ -z "$region" ] || [ -z "$zone" ]; then error_exit "Please enter all the required variables."; fi
+    elif [ "$var_choice" == "n" ]; then
+      echo -e "*"
+      echo -en "* ${geel}Using the default variables.${reset}"
+    else
+      error_exit "Invalid choice."
+    fi
+
+    # Asking for the choice of Debian or Ubuntu for VMs.
+    banner_message "Creating the infrastructure."
+    echo -e "*"
+    echo -e "* Which OS do you want to use for the VMs? (Default: Ubuntu):\n* ${blauw}[1]${reset} Ubuntu\n* ${blauw}[2]${reset} Debian\n*"
+    read -p "* Enter your choice: " os_choice
+    if [ "$os_choice" == "1" ] || [ -z "$os_choice" ]; then
+      image_project=ubuntu-os-cloud
+      image_family=ubuntu-2004-lts
+      startup_script=Startup-Script-Gcloud-DotNet-Ubuntu.sh
+    elif [ "$os_choice" == "2" ]; then
+      image_project=debian-cloud
+      image_family=debian-10
+      startup_script=Startup-Script-Gcloud-DotNet-Debian.sh
+    else
+      error_exit "Invalid choice."
+    fi
+
+    # Asking for database password.
+    banner_message "Creating the infrastructure."
+    echo -e "*"
+    read -p "* Enter the database password: " db_password
+    if [ -z "$db_password" ]; then error_exit "Please enter the database password."; fi
+
     banner_message "Creating the infrastructure."
     create_project; wait                        # Step 1
     set_project; wait                           # Step 2
