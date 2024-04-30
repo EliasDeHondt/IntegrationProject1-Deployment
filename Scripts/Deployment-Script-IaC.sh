@@ -150,6 +150,8 @@ function enable_apis() { # Step 4
   EXIT_CODE=$((EXIT_CODE + $?))
   gcloud services enable storage-component.googleapis.com > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
+  gcloud services enable gmail.googleapis.com > ./deployment-script.log 2>&1
+  EXIT_CODE=$((EXIT_CODE + $?))
   wait
 
   if [ $EXIT_CODE -eq 0 ]; then success "APIs enabled successfully."; else error_exit "Failed to enable the APIs."; fi
@@ -407,15 +409,21 @@ function create_service_account() { # Step 16
 
 # Functie: Add permissions to the service account if it doesn't already have them.
 function add_permissions_to_service_account() { # Step 17
-  local ROLE="roles/storage.admin"
+  local ROLE1="roles/storage.admin"
+  local ROLE2="roles/iam.serviceAccountUser"
   local EXISTING_BINDINGS=$(gcloud projects get-iam-policy $projectid --flatten="bindings[].members" --format="value(bindings.members)" | grep -o "serviceAccount:${user_email}")
 
   if [ -z "$EXISTING_BINDINGS" ]; then
     loading_icon 10 "* Step 17/$global_staps:" &
+    # Add storage permissions
     gcloud projects add-iam-policy-binding $projectid \
       --member=serviceAccount:$user_email \
-      --role=$ROLE > ./deployment-script.log 2>&1
+      --role=$ROLE1 > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
+    # Add gmail permissions
+    gcloud projects add-iam-policy-binding $projectid \
+      --member=serviceAccount:$user_email \
+      --role=$ROLE2 > ./deployment-script.log 2>&1
     wait
 
     if [ $EXIT_CODE -eq 0 ]; then success "Permissions added to the service account successfully."; else error_exit "Failed to add permissions to the service account."; fi
