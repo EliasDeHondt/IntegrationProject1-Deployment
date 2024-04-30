@@ -546,11 +546,11 @@ function create_load_balancer() { # Step 21
     EXIT_CODE=$((EXIT_CODE + $?))
 
     # Create a SSL certificate
-    gcloud compute ssl-certificates create codeforge-ssl-certificate --domains=$domain_name --global > ./deployment-script.log 2>&1
+    gcloud compute ssl-certificates create $ssl_certificate_name --domains=$domain_name --global > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
 
     # Create a target HTTPS proxy
-    gcloud compute target-https-proxies create $TARGET_PROXY_NAME --url-map=$URL_MAP_NAME --ssl-certificates=codeforge-ssl-certificate > ./deployment-script.log 2>&1
+    gcloud compute target-https-proxies create $TARGET_PROXY_NAME --url-map=$URL_MAP_NAME --ssl-certificates=$ssl_certificate_name > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
 
     # Create a forwarding rule
