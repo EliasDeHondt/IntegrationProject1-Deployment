@@ -442,12 +442,14 @@ function set_metadata() { # Step 17
   local METADATA_VALUE3="5432"
   local METADATA_VALUE4="codeforge"
   local METADATA_VALUE5="admin"
+  local METADATA_VALUE6="codeforge.noreply@gmail.com"
+  local METADATA_VALUE7="evqb lztz oqvu kgwc"
 
   gcloud iam service-accounts keys create service-account-key.json --iam-account=$user_email > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
 
   loading_icon 10 "* Step 18/$global_staps:" &
-  gcloud compute project-info add-metadata --metadata="GITLAB_USERNAME=$GITLAB_USERNAME,GITLAB_TOKEN=$GITLAB_TOKEN,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE1,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE2,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE3,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE4,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE5,ASPNETCORE_POSTGRES_PASSWORD=$db_password,ASPNETCORE_STORAGE_BUCKET=$bucket_name" > ./deployment-script.log 2>&1
+  gcloud compute project-info add-metadata --metadata="GITLAB_USERNAME=$GITLAB_USERNAME,GITLAB_TOKEN=$GITLAB_TOKEN,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE1,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE2,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE3,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE4,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE5,ASPNETCORE_POSTGRES_PASSWORD=$db_password,ASPNETCORE_STORAGE_BUCKET=$bucket_name,ASPNETCORE_EMAIL=$METADATA_VALUE6,ASPNETCORE_EMAIL_PASSWORD=$METADATA_VALUE7" > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
   gcloud compute project-info add-metadata --metadata-from-file GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
@@ -520,7 +522,8 @@ function create_load_balancer() { # Step 21
   local HEALTH_CHECK_NAME=codeforge-health-check
   local URL_MAP_NAME=codeforge-url-map
   local TARGET_PROXY_NAME=codeforge-target-proxy
-  local FORWARDING_RULE_NAME=codeforge-forwarding-rule
+  local HTTPS_RULE_NAME=https-forwarding-rule
+  local HTTP_RULE_NAME=http-forwarding-rule
   local EXISTING_LOAD_BALANCER=$(gcloud compute forwarding-rules list --format="value(NAME)" | grep -o "^$FORWARDING_RULE_NAME")
 
   if [ -z "$EXISTING_LOAD_BALANCER" ]; then
@@ -554,8 +557,11 @@ function create_load_balancer() { # Step 21
     EXIT_CODE=$((EXIT_CODE + $?))
 
     # Create a forwarding rule
-    gcloud compute forwarding-rules create $FORWARDING_RULE_NAME --global --target-https-proxy=$TARGET_PROXY_NAME --ports=443 > ./deployment-script.log 2>&1
+    gcloud compute forwarding-rules create $HTTPS_RULE_NAME --global --target-https-proxy=$TARGET_PROXY_NAME --ports=443 > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
+
+    # Create a ridirect HTTP forwarding rule
+    gcloud compute forwarding-rules create $HTTP_RULE_NAME --global --target-http-proxy=$TARGET_PROXY_NAME --ports=80 > ./deployment-script.log 2>&1
     wait
 
     if [ $EXIT_CODE -eq 0 ]; then success "Load balancer created successfully."; else error_exit "Failed to create the load balancer."; fi
