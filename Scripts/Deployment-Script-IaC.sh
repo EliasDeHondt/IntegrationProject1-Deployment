@@ -460,12 +460,12 @@ function set_metadata() { # Step 17
 }
 
 # Functie: Create a new instance template if it doesn't already exist.
-function create_instance_templates() { # Step 17
+function create_instance_templates() { # Step 19
   local MACHINE_TYPE=n1-standard-4
   local EXISTING_TEMPLATE=$(gcloud compute instance-templates list --format="value(NAME)" | grep -o "^$template_name")
 
   if [ -z "$EXISTING_TEMPLATE" ]; then
-    loading_icon 10 "* Stap 17/$global_staps:" &
+    loading_icon 10 "* Stap 19/$global_staps:" &
     gcloud compute instance-templates create $template_name \
       --machine-type=$MACHINE_TYPE \
       --image-project=$image_project \
@@ -478,7 +478,7 @@ function create_instance_templates() { # Step 17
 
     if [ $EXIT_CODE -eq 0 ]; then success "Instance template created successfully."; else error_exit "Failed to create the instance template."; fi
   else
-    echo -n "* Step 17/$global_staps:"
+    echo -n "* Step 19/$global_staps:"
     skip "Instance template already exists. Skipping creation."
   fi
 }
@@ -783,7 +783,7 @@ function credits() { # Choice 6
   echo -e "*\n* ${COLOR_JANA_YANG}Jana Yang${reset}"
   echo -e "*   | ${COLOR_JANA_YANG}GitHub: ${GITGUB_URL_JANA_YANG}${reset}"
   echo -e "${line}"
-  sleep 30
+  sleep 10
   main
 }
 
