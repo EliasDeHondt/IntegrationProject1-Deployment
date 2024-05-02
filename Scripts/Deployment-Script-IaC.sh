@@ -522,8 +522,7 @@ function create_load_balancer() { # Step 21
   local HEALTH_CHECK_NAME=codeforge-health-check
   local URL_MAP_NAME=codeforge-url-map
   local TARGET_PROXY_NAME=codeforge-target-proxy
-  local HTTPS_RULE_NAME=https-forwarding-rule
-  local HTTP_RULE_NAME=http-forwarding-rule
+  local FORWARDING_RULE_NAME=codeforge-forwarding-rule
   local EXISTING_LOAD_BALANCER=$(gcloud compute forwarding-rules list --format="value(NAME)" | grep -o "^$FORWARDING_RULE_NAME")
 
   if [ -z "$EXISTING_LOAD_BALANCER" ]; then
@@ -556,12 +555,9 @@ function create_load_balancer() { # Step 21
     gcloud compute target-https-proxies create $TARGET_PROXY_NAME --url-map=$URL_MAP_NAME --ssl-certificates=$ssl_certificate_name > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
 
-    # Create a forwarding rule
-    gcloud compute forwarding-rules create $HTTPS_RULE_NAME --global --target-https-proxy=$TARGET_PROXY_NAME --ports=443 > ./deployment-script.log 2>&1
+    # Create a forwarding rule for HTTPS
+    gcloud compute forwarding-rules create $FORWARDING_RULE_NAME --global --target-https-proxy=$TARGET_PROXY_NAME --ports=443 > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
-
-    # Create a ridirect HTTP forwarding rule
-    gcloud compute forwarding-rules create $HTTP_RULE_NAME --global --target-http-proxy=$TARGET_PROXY_NAME --ports=80 > ./deployment-script.log 2>&1
     wait
 
     if [ $EXIT_CODE -eq 0 ]; then success "Load balancer created successfully."; else error_exit "Failed to create the load balancer."; fi
