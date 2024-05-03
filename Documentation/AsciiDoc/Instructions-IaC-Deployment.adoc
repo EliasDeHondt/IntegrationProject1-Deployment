@@ -17,7 +17,7 @@ image::https://eliasdh.com/assets/media/images/logo-github.png[logo]
 
 == 🖖Introduction
 
-This document will guide you through the process of deploying the entire infrastructure of the CodeForge application to the Google Cloud Platform. The infrastructure is deployed using Infrastructure as Code link:../Scripts/Deployment-Script-IaC.sh[Deployment Script IaC].
+This document will guide you through the process of deploying the entire infrastructure of the CodeForge application to the Google Cloud Platform. The infrastructure is deployed using Infrastructure as Code link:../../Scripts/Deployment-Script-IaC.sh[Deployment Script IaC].
 
 == ✨Steps
 
@@ -70,7 +70,7 @@ sudo ./Deployment-Script-IaC.sh
 +
 **Example of a DNS record:**
 
-image::../Images/Instructions-IaC-Deployment-1.png[Instructions IaC Deployment 1]
+image::../../Images/Instructions-IaC-Deployment-1.png[Instructions IaC Deployment 1]
 
 == 🔗Links
 

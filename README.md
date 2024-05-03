@@ -26,19 +26,24 @@ Please also see following documents:
 ### 📚To Do Deployment
 - [x] Deployment Infrastructure Architecture
     - [x] Description Connectivity
-        - [x] [Description Connectivity](/Documentation/Deployment-Analyze-and-Architecture.md#💭description-connectivity)
+        - [x] [Description Connectivity (Markdown)](/Documentation/Markdown/Deployment-Analyze-and-Architecture.md#💭description-connectivity)
+        - [x] [Description Connectivity (AsciiDoc)](/Documentation/AsciiDoc/Deployment-Analyze-and-Architecture.adoc#💭description-connectivity)
     - [x] Network drawing
-        - [x] [Network Drawing](/Documentation/Deployment-Analyze-and-Architecture.md#📷network-drawing)
+        - [x] [Network Drawing (Markdown)](/Documentation/Markdown/Deployment-Analyze-and-Architecture.md#📷network-drawing)
+        - [x] [Network Drawing (AsciiDoc)](/Documentation/AsciiDoc/Deployment-Analyze-and-Architecture.adoc#📷network-drawing)
     - [x] Risk Analysis
-        - [x] [Risk Analysis](/Documentation/Deployment-Analyze-and-Architecture.md#🔍risk-analysis)
+        - [x] [Risk Analysis (Markdown)](/Documentation/Markdown/Deployment-Analyze-and-Architecture.md#🔍risk-analysis)
+        - [x] [Risk Analysis (AsciiDoc)](/Documentation/AsciiDoc/Deployment-Analyze-and-Architecture.adoc#🔍risk-analysis)
     - [x] Project Context
-        - [x] [Project Context](/Documentation/Deployment-Analyze-and-Architecture.md#📑context)
+        - [x] [Project Context (Markdown)](/Documentation/Markdown/Deployment-Analyze-and-Architecture.md#📑context)
+        - [x] [Project Context (AsciiDoc)](/Documentation/AsciiDoc/Deployment-Analyze-and-Architecture.adoc#📑context)
 - [x] Infra deploy automation: `Bash scripts`
     - [x] [Deployment Script IaC](/Scripts/Deployment-Script-IaC.sh)
 - [x] Instructions for deployment
-    - [x] [Instructions GCloud](/Documentation/Instructions-GCloud.md)
-    - [x] [Instructions MVP Deployment](/Documentation/Instructions-MVP-Deployment.md)
-    - [x] [Instructions for Deployment](/Documentation/Instructions-IaC-Deployment.md)
+    - [x] [Instructions MVP Deployment (Markdown)](/Documentation/Markdown/Instructions-MVP-Deployment.md)
+    - [x] [Instructions for Deployment (AsciiDoc)](/Documentation/AsciiDoc/Instructions-MVP-Deployment.adoc)
+    - [x] [Instructions for Deployment (Markdown)](/Documentation/Markdown/Instructions-IaC-Deployment.md)
+    - [x] [Instructions for Deployment (AsciiDoc)](/Documentation/AsciiDoc/Instructions-IaC-Deployment.adoc)
 - [x] Instructions for restoring a backup
     - [x] [GitLab to GitHub Backup](/Scripts/GitLab-to-GitHub-Backup.ps1)
 

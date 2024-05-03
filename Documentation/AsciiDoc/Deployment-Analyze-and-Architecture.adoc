@@ -38,7 +38,7 @@ This document provides an overview of the network architecture and risk analysis
 
 == 📷Network Drawing
 
-image::../Images/Network-Drawing.png[Network Drawing]
+image::../../Images/Network-Drawing.png[Network Drawing]
 
 === 💭Description Connectivity
 
