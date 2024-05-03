@@ -532,7 +532,7 @@ function create_load_balancer() { # Step 21
     local EXIT_CODE=$?
 
     # Create a backend service
-    gcloud compute backend-services create $BACKEND_SERVICE_NAME --protocol=HTTP --health-checks=$HEALTH_CHECK_NAME --global > ./deployment-script.log 2>&1
+    gcloud compute backend-services create $BACKEND_SERVICE_NAME --protocol=HTTP --health-checks=$HEALTH_CHECK_NAME --session-affinity=CLIENT_IP --global > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
 
     # Add backend instance group to backend service

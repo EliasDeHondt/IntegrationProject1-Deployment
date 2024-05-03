@@ -15,4 +15,5 @@ for ((i=1; i<=10; i++)); do
     done; wait) & 
 done
 # Or
-stress --cpu 4 --timeout 600000
+sudo apt-get install stress
+sudo stress --cpu 4 --timeout 600000
