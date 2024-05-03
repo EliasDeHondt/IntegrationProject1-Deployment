@@ -3,20 +3,21 @@
 
 ## 📘Table of Contents
 
-1. [📘Table of Contents](#📘table-of-contents)
-2. [🖖Introduction](#🖖introduction)
-3. [✨Steps](#✨steps)
-    1. [👉Step 0: Preparations](#👉step-0-preparations)
-    2. [👉Step 1: Configure Environment](#👉step-1-configure-environment)
-    3. [👉Step 2: Run Create Script](#👉step-2-run-create-script)
-    4. [👉Step 3: Configure Custom Domain](#👉step-3-configure-custom-domain)
-4. [🔗Links](#🔗links)
+- [💙🤍Instructions IaC Deployment🤍💙](#instructions-iac-deployment)
+  - [📘Table of Contents](#table-of-contents)
+  - [🖖Introduction](#introduction)
+  - [✨Steps](#steps)
+    - [👉Step 0: Preparations](#step-0-preparations)
+    - [👉Step 1: Configure Environment](#step-1-configure-environment)
+    - [👉Step 2: Run Create Script](#step-2-run-create-script)
+    - [👉Step 3: Configure Custom Domain](#step-3-configure-custom-domain)
+  - [🔗Links](#links)
 
 ---
 
 ## 🖖Introduction
 
-This document will guide you through the process of deploying the entire infrastructure of the CodeForge application to the Google Cloud Platform. The infrastructure is deployed using Infrastructure as Code [Deployment Script IaC](/Scripts/Deployment-Script-IaC.sh).
+This document will guide you through the process of deploying the entire infrastructure of the CodeForge application to the Google Cloud Platform. The infrastructure is deployed using Infrastructure as Code [Deployment Script IaC](../Scripts/Deployment-Script-IaC.sh).
 
 ## ✨Steps
 
@@ -49,14 +50,15 @@ This document will guide you through the process of deploying the entire infrast
     sudo chmod +x Deployment-Script-IaC.sh
     sudo ./Deployment-Script-IaC.sh
     ```
-> ***The script will do the rest!***
+**The script will do the rest!**
 
 ### 👉Step 3: Configure Custom Domain
 
 - When you did not use the default configuration of the script, you will need to go to your DNS provider and add a records That contains the public IP address of the load balancer you will get this IP address at the end of the script execution.
 
-> **Example of a DNS record:**
-![Instructions IaC Deployment 1](/Images/Instructions-IaC-Deployment-1.png)
+**Example of a DNS record:**
+
+![Instructions IaC Deployment 1](../Images/Instructions-IaC-Deployment-1.png)
 
 ## 🔗Links
 - 👯 Web hosting company [EliasDH.com](https://eliasdh.com).

@@ -1,0 +1,186 @@
+image::https://eliasdh.com/assets/media/images/logo-github.png[logo]
+
+[#toc]
+== 💙🤍Deployment Analyze and Architecture🤍💙
+
+[[_table_of_contents]]
+== 📘Table of Contents
+
+* <<_table_of_contents>>
+** <<_introduction>>
+** <<_network_drawing>>
+*** <<_description_connectivity>>
+** <<_1_deployment_risks>>
+*** <<_1_1_gitlab_outage>>
+*** <<_1_2_google_cloud_outage>>
+** <<_2_performance_risks>>
+*** <<_2_1_resource_exhaustion>>
+*** <<_2_2_database_performance>>
+** <<_3_security_risks>>
+*** <<_3_1_data_breach>>
+** <<_4_operational_risks>>
+*** <<_4_1_server_downtime>>
+** <<_5_loss_of_employee>>
+*** <<_5_1_ai_revolution>>
+** <<_context>>
+*** <<_project_collaboration>>
+*** <<_project_overview>>
+*** <<_project_objectives>>
+*** <<_roles_and_users>>
+*** <<_non_functional_requirements>>
+*** <<_material_and_technology>>
+*** <<_usability_and_performance>>
+** <<_links>>
+
+== 🖖Introduction
+
+This document provides an overview of the network architecture and risk analysis for the deployment of the `Phygital` tool. The network architecture is designed to be scalable, secure, and reliable, with a focus on performance and availability. The risk analysis identifies potential risks and their impact on the deployment of the application. The risks are categorized into deployment, performance, security, and operational risks, with mitigation strategies to minimize their impact.
+
+== 📷Network Drawing
+
+image::../Images/Network-Drawing.png[Network Drawing]
+
+=== 💭Description Connectivity
+
+* Cables:
+    +++
+    <br><font color="green">Green:</font> Secure
+    <br><font color="red">Red:</font> Not Secure
+    <br><font color="yellow">Yellow:</font> Power
+    +++
+
+* Components:
+    ** Router
+    ** Switch
+    ** UPS
+    ** Google Cloud
+    ** Internet
+    ** Firewall
+    ** Load Balancer
+        *** .NET Core
+        *** .NET Core
+        *** .NET Core
+        *** Autoscaling (....)
+    ** Metadata Server
+    ** Database Server
+    ** Bucket Storage
+
+---
+
+* Question: *Find out how to connect to a GitLab private repository*
+    ** Answer: I will use the GitLab CI/CD to deploy the application to Google Cloud. The GitLab CI/CD will use a service account to authenticate with Google Cloud. The service account will have the necessary permissions to access the Google Cloud resources.
+    ** Link: link:https://docs.gitlab.com/ee/ci/[GitLab CI/CD]
+
+* Question: *Check how the application in the cloud connects to its database*
+    ** Answer: The application in the cloud connects to its database using a connection string. The connection string contains the necessary information to connect to the database, such as the server name, database name, username, and password.
+    ** Link: link:https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/connection-strings-and-configuration-files[Connection Strings]
+
+* Question: *Check how you connect to any other cloud components*
+    ** Answer: The application in the cloud connects to other cloud components using their respective APIs. For example, the application can use the Google Cloud Storage API to access files in a bucket, or the Google Cloud Pub/Sub API to publish and subscribe to messages.
+    ** Link: link:https://cloud.google.com/apis[Google Cloud APIs]
+
+* Question: *Describe how you can use the metadata server*
+    ** Answer: The metadata server provides information about the Google Cloud instance, such as its hostname, IP address, and project ID. The application can use this information to configure itself dynamically based on the environment it is running in.
+    ** Link: link:https://cloud.google.com/compute/docs/storing-retrieving-metadata[Metadata Server]
+
+* Question: *Check the requirements for using autoscaling (horizontal scaling) for the application*
+    ** Answer: To use autoscaling, the application must be stateless and able to handle requests independently. The application must also be able to start and stop without losing any data or state. Additionally, the application must be able to handle a variable number of requests and scale up or down based on demand.
+    ** Link: link:https://cloud.google.com/compute/docs/autoscaler[Autoscaling]
+
+**Note:** The network drawing is a simplified representation of the actual network architecture. Google Cloud does a lot of the heavy lifting, and the network is designed to be scalable and secure.
+
+== 🔍Risk Analysis
+
+=== 🚀1. Deployment Risks
+
+==== 🚀1.1. GitLab Outage
+
+* **Risk:** Potential GitLab outages.
+* **Impact:** High
+* **Probability:** Low
+* **Mitigation:** Create multiple backups to an alternative Git service such as GitHub or Bitbucket.
+
+==== 🚀1.2. Google Cloud Outage
+
+* **Risk:** Potential Google Cloud outages.
+* **Impact:** High
+* **Probability:** Low
+* **Mitigation:** If possible, deploy the application to multiple zones in the same region.
+
+=== 📉2. Performance Risks
+
+==== 📉2.1. Resource Exhaustion
+
+* **Risk:** Resource exhaustion due to high traffic.
+* **Impact:** High
+* **Probability:** High
+* **Mitigation:** Implement a load balancer and auto-scaling to handle high traffic.
+
+==== 📉2.2. Database Performance
+
+* **Risk:** Database performance issues due to high traffic.
+* **Impact:** High
+* **Probability:** Medium
+* **Mitigation:** Implement a caching layer and optimize database queries. (`Lazy loading and eager loading`)
+
+=== 🛡️3. Security Risks
+
+==== 🛡️3.1. Data Breach
+
+* **Risk:** Data breach due to security vulnerabilities.
+* **Impact:** High
+* **Probability:** Medium
+* **Mitigation:** Make sure that no default passwords are used.
+
+=== 🛠️4. Operational Risks
+
+==== 🛠️4.1. Server Downtime
+
+* **Risk:** Server downtime due to Google cloud credit limit.
+* **Impact:** High
+* **Probability:** Low
+* **Mitigation:** Monitor Google cloud credit limit and set up alerts.
+
+=== ☠️5. Loss of Employee
+
+==== ☠️5.1. AI Revolution
+
+* **Risk:** Loss of employee due to AI revolution.
+* **Impact:** High
+* **Probability:** High
+* **Mitigation:** Create documentation to transfer knowledge.
+
+== 📑Context
+
+=== 📑Project Collaboration
+
+This project is a collaborative effort between Levuur and Tree Company. link:https://treecompany.be[Tree Company] specializes in engaging and informing citizens on societal issues through digital solutions. Levuur, on the other hand, is an expert in participation and stakeholder management, designing and guiding tailored stakeholder processes for companies, governments, and organizations. Both Levuur and Tree Company are part of DBP Partners link:https://dbppartners.be[DBP Partners], collaborating structurally in various projects.
+
+=== 📑Project Overview
+
+The collaboration is part of an international Erasmus+ project involving Levuur, Tree Company, the city of Sint-Niklaas (Belgium), DYPALL Network (Portugal), and Danes Je Nov Dan (Slovenia). The primary goal is to design a 'Phygital' tool that local governments and organizations can utilize to gather input from young people on policy issues relevant to them. The tool aims to provide a novel, accessible way for young people to express their views on policies to local authorities by combining physical and digital elements.
+
+=== 📑Project Objectives
+
+The main objective is to design a `Phygital` tool that meets the specified requirements and roles. The tool should be applicable to any organization seeking youth participation in decision-making processes. The standard case for testing involves the youth council of a municipality or city, engaging with young people about the upcoming local elections. Additionally, a second case, selected from your local context, should demonstrate the tool's versatility across various organizations.
+
+=== 📑Roles and Users
+
+Four distinct roles have been identified for the tool: Eindgebruiker (young participant), Begeleider (facilitator present during tool usage), Beheerder van een deelplatform (local government or organizational administrator managing projects), and Beheerders van het gehele platform (platform administrators like Tree Company and Levuur).
+
+=== 📑Non-functional Requirements
+
+The tool is expected to function in semi-public spaces like school halls, sports clubs, libraries, and community centers. Both guided and unguided usage scenarios need to be accommodated, requiring an attractive and intuitive design. The tool should cater to individual and group usage by young participants aged 17 to 25.
+
+=== 📑Material and Technology
+
+While a fully finished casing is not part of the task, the setup should be robust enough for testing in different locations. It must work with standard hardware and software across the EU, be easily set up and dismantled, transportable, made of durable materials, and cost-efficient. The web application should be compatible with common browsers, scalable, and coded for maintenance and future enhancements.
+
+=== 📑Usability and Performance
+
+Emphasis is placed on user-friendliness, engaging design, and performance meeting industry standards. The tool will undergo user tests to refine the design based on participant interactions. Performance, security, and testing standards must align with best practices.
+
+== 🔗Links
+
+- 👯 Web hosting company link:https://eliasdh.com[EliasDH.com]
+- 📫 How to reach us elias.dehondt@outlook.com

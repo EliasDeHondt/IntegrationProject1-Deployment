@@ -3,30 +3,33 @@
 
 ## 📘Table of Contents
 
-1. [📘Table of Contents](#📘table-of-contents)
-2. [🖖Introduction](#🖖introduction)
-3. [📷Network Drawing](#📷network-drawing)
-    1. [💭Description Connectivity](#💭description-connectivity)
-4. [🔍Risk Analysis](#🔍risk-analysis)
-    1. [🚀Deployment Risks](#4.1-🚀deployment-risks)
-          1. [🚀GitLab Outage](#4.1-🚀gitlab-outage)
-          2. [🚀Google Cloud Outage](#4.2-🚀google-cloud-outage)
-    2. [📉Performance Risks](#4.2-📉performance-risks)
-          1. [📉Resource Exhaustion](#4.1-📉resource-exhaustion)
-          2. [📉Database Performance](#4.2-📉database-performance)
-    3. [🛡️Security Risks](#4.3-🛡️security-risks)
-          1. [🛡️Data Breach](#4.1-🛡️data-breach)
-    4. [🛠️Operational Risks](#4.4-🛠️operational-risks)
-          1. [🛠️Server Downtime](#4.1-🛠️server-downtime)
-5. [📑Context](#📑context)
-    1. [📑Project Collaboration](#📑project-collaboration)
-    2. [📑Project Overview](#📑project-overview)
-    3. [📑Project Objectives](#📑project-objectives)
-    4. [📑Roles and Users](#📑roles-and-users)
-    5. [📑Non-functional Requirements](#📑non-functional-requirements)
-    6. [📑Material and Technology](#📑material-and-technology)
-    7. [📑Usability and Performance](#📑usability-and-performance)
-6. [🔗Links](#🔗links)
+- [💙🤍Deployment Analyze and Architecture🤍💙](#deployment-analyze-and-architecture)
+  - [📘Table of Contents](#table-of-contents)
+  - [🖖Introduction](#introduction)
+  - [📷Network Drawing](#network-drawing)
+    - [💭Description Connectivity](#description-connectivity)
+  - [🔍Risk Analysis](#risk-analysis)
+    - [1. 🚀Deployment Risks](#1-deployment-risks)
+      - [1.1 🚀GitLab Outage](#11-gitlab-outage)
+      - [1.2 🚀Google Cloud Outage](#12-google-cloud-outage)
+    - [2. 📉Performance Risks](#2-performance-risks)
+      - [2.1 📉Resource Exhaustion](#21-resource-exhaustion)
+      - [2.2 📉Database Performance](#22-database-performance)
+    - [3. 🛡️Security Risks](#3-️security-risks)
+      - [3.1 🛡️Data Breach](#31-️data-breach)
+    - [4. 🛠️Operational Risks](#4-️operational-risks)
+      - [4.1 🛠️Server Downtime](#41-️server-downtime)
+    - [5. ☠️Loss of Employee](#5-️loss-of-employee)
+      - [5.1 ☠️Loss of Employee](#51-️loss-of-employee)
+  - [📑Context](#context)
+    - [📑Project Collaboration](#project-collaboration)
+    - [📑Project Overview](#project-overview)
+    - [📑Project Objectives](#project-objectives)
+    - [📑Roles and Users](#roles-and-users)
+    - [📑Non-functional Requirements](#non-functional-requirements)
+    - [📑Material and Technology](#material-and-technology)
+    - [📑Usability and Performance](#usability-and-performance)
+  - [🔗Links](#links)
 
 ---
 
@@ -83,7 +86,7 @@ This document provides an overview of the network architecture and risk analysis
     - Answer: To use autoscaling, the application must be stateless and able to handle requests independently. The application must also be able to start and stop without losing any data or state. Additionally, the application must be able to handle a variable number of requests and scale up or down based on demand.
     - Link: [Autoscaling](https://cloud.google.com/compute/docs/autoscaler)
 
-> **Note:** The network drawing is a simplified representation of the actual network architecture. Google Cloud does a lot of the heavy lifting, and the network is designed to be scalable and secure.
+**Note:** The network drawing is a simplified representation of the actual network architecture. Google Cloud does a lot of the heavy lifting, and the network is designed to be scalable and secure.
 
 ## 🔍Risk Analysis
 

@@ -1,0 +1,78 @@
+image::https://eliasdh.com/assets/media/images/logo-github.png[logo]
+
+[#toc]
+== 💙🤍Instructions IaC Deployment🤍💙
+
+[[_table_of_contents]]
+== 📘Table of Contents
+
+* <<_table_of_contents>>
+* <<_introduction>>
+* <<_steps>>
+** <<_step_0_preparations>>
+** <<_step_1_configure_environment>>
+** <<_step_2_run_create_script>>
+** <<_step_3_configure_custom_domain>>
+* <<_links>>
+
+== 🖖Introduction
+
+This document will guide you through the process of deploying the entire infrastructure of the CodeForge application to the Google Cloud Platform. The infrastructure is deployed using Infrastructure as Code link:../Scripts/Deployment-Script-IaC.sh[Deployment Script IaC].
+
+== ✨Steps
+
+=== 👉Step 0: Preparations
+
+- Install the Google Cloud CLI link:https://github.com/EliasDH-com/Documentation/blob/main/Documentation/Instructions-GCloud-CLI.md[Instructions GCloud CLI]
+
+=== 👉Step 1: Configure Environment
+
+- Type the following command to initialize the Google Cloud CLI
++
+[source,bash]
+----
+gcloud init
+----
++
+- Press `1` to log in with your Google account.
+- Select your Google account.
+- The step for selecting a project is not required `CTRL+C` to skip.
+
+=== 👉Step 2: Run Create Script
+
+- Clone the repository
++
+[source,bash]
+----
+git clone https://github.com/EliasDeHondt/IntegrationProject1-Deployment.git
+----
++
+- Navigate to the project folder
++
+[source,bash]
+----
+cd IntegrationProject1-Deployment/Scripts
+----
++
+- Run the [Deployment Script IaC](/Scripts/Deployment-Script-IaC.sh)
++
+[source,bash]
+----
+sudo chmod +x Deployment-Script-IaC.sh
+sudo ./Deployment-Script-IaC.sh
+----
++
+**The script will do the rest!**
+
+=== 👉Step 3: Configure Custom Domain
+
+- When you did not use the default configuration of the script, you will need to go to your DNS provider and add a records That contains the public IP address of the load balancer you will get this IP address at the end of the script execution.
++
+**Example of a DNS record:**
+
+image::../Images/Instructions-IaC-Deployment-1.png[Instructions IaC Deployment 1]
+
+== 🔗Links
+
+- 👯 Web hosting company link:https://eliasdh.com[EliasDH.com]
+- 📫 How to reach us elias.dehondt@outlook.com

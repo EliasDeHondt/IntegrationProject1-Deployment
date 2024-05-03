@@ -1,0 +1,200 @@
+image::https://eliasdh.com/assets/media/images/logo-github.png[logo]
+
+[#toc]
+== 💙🤍Instructions MVP Deployment🤍💙
+
+[[_table_of_contents]]
+== 📘Table of Contents
+
+* <<_table_of_contents>>
+* <<_introduction>>
+* <<_steps>>
+** <<_step_0_preparations>>
+** <<_step_1_create_environment_project>>
+** <<_step_2_create_postgresql_database_google_cloud_sql>>
+** <<_step_3_clone_the_github_repository>>
+** <<_step_4_deploy_the_application>>
+** <<_step_5_configure_custom_domain>>
+* <<_extra>>
+* <<_links>>
+
+== 🖖Introduction
+
+This document will guide you through the process of deploying the MVP of the CodeForge application to the Google Cloud Platform. The MVP is a simple web application that is built using the .NET 7 framework. The application uses a PostgreSQL database to store data. The application is hosted on the Google Cloud Platform using the App Engine service. The database is hosted on the Google Cloud Platform using the Cloud SQL service. The application is deployed using the Google Cloud CLI.
+
+== ✨Steps
+
+=== 👉Step 0: Preparations
+
+- Insall the Google Cloud CLI link:https://github.com/EliasDH-com/Documentation/blob/main/Documentation/Instructions-GCloud-CLI.md[Instructions GCloud CLI]
+
+=== 👉Step 1: Create Environment / Project
+
+- Create a new project in the Google Cloud Console
++
+[source,bash]
+----
+gcloud projects create $PROJECT_ID
+----
++
+- Set the project
++
+[source,bash]
+----
+gcloud config set project $PROJECT_ID
+----
++
+- Set the billing account
++
+[source,bash]
+----
+gcloud beta billing projects link $(gcloud config get-value project) --billing-account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)")
+----
++
+- Enable the required services
++
+[source,bash]
+----
+gcloud services enable sqladmin.googleapis.com
+gcloud services enable appengineflex.googleapis.com
+----
++
+- Make sure to create your application first.
++
+[source,bash]
+----
+gcloud app create --region=europe-west1 --project=$(gcloud config get-value project)
+----
+
+=== 👉Step 2: Create PostgreSQL Database (Google Cloud SQL)
+
+- Create a PostgreSQL database in the Google Cloud Console (`This can take a few minutes`)
++
+[source,bash]
+----
+gcloud sql instances create $INSTANCE_NAME --database-version=POSTGRES_15 --tier=db-f1-micro --region=europe-west1 --authorized-networks=0.0.0.0/0
+----
++
+- Create a database user and delete the default user
++
+[source,bash]
+----
+gcloud sql users create $USERNAME --instance=$INSTANCE_NAME --password=$PASSWORD
+gcloud sql users delete postgres --instance=$INSTANCE_NAME --quiet
+----
++
+- Create a database
++
+[source,bash]
+----
+gcloud sql databases create $DATABASE_NAME --instance=$INSTANCE_NAME
+----
+
+=== 👉Step 3: Clone The GitHub Repository
+- Clone the repository
++
+[source,bash]
+----
+git clone https://github.com/EliasDeHondt/IntegrationProject1-Development.git
+cd IntegrationProject1-Development
+----
+
+=== 👉Step 4: Deploy The Application
+
+- Deploy the application (`This can take a few minutes`)
++
+[source,bash]
+----
+gcloud app deploy --quiet
+----
+
+=== 👉Step 5: Configure Custom Domain
+
+- Verify your domain (`This can take a day for the DNS to propagate it depends on the domain provider and the TTL`)
++
+[source,bash]
+----
+gcloud domains verify $DOMAIN_NAME
+----
++
+- Add your custom domain
++
+[source,bash]
+----
+gcloud domains create-mapping $DOMAIN_NAME --project=$(gcloud config get-value project)
+----
++
+- Configure SSL
++
+[source,bash]
+----
+gcloud beta app domain-mappings update $DOMAIN_NAME --certificate-management=managed --project=$(gcloud config get-value project)
+----
++
+- You can find your URL at the end of the output of the previous command.
++
+[source,bash]
+----
+gcloud app browse
+----
+
+== 📦Extra
+
+- Delete a PostgreSQL database in the Google Cloud Console
++
+[source,bash]
+----
+gcloud sql databases delete $DATABASE_NAME --instance=$INSTANCE_NAME --quiet
+----
+- Delete de google cloud project
++
+[source,bash]
+----
+gcloud projects delete $(gcloud config get-value project) --quiet
+----
+- Get Connection String
++
+[source,bash]
+----
+#!/bin/bash
+############################
+# @author Elias De Hondt   #
+# @see https://eliasdh.com #
+# @since 01/03/2024        #
+############################
+# FUNCTIE: This script is used to get the connection string for a Cloud SQL instance
+INSTANCE_NAME="db1"
+USER_NAME="admin"
+PASSWORD="123"
+PORT=5432
+
+IP_ADDRESS=$(gcloud sql instances describe $INSTANCE_NAME --format="value(ipAddresses[0].ipAddress)")
+CONNECTION_STRING="Host=${IP_ADDRESS};Port=${PORT};Database=codeforge;User Id=${USER_NAME};Password=${PASSWORD}"
+echo "Connection String: ${CONNECTION_STRING}"
+----
+- Rebuild the project and restore the project
++
+[source,bash]
+----
+cd IntegrationProject1-Development/MVC/ClientApp
+npm rebuild
+npm run build
+cd ../../
+----
+- Restore the project
++
+[source,bash]
+----
+dotnet restore
+----
+- Build the project
++
+[source,bash]
+----
+dotnet build
+----
+
+== 🔗Links
+
+- 👯 Web hosting company link:https://eliasdh.com[EliasDH.com]
+- 📫 How to reach us elias.dehondt@outlook.com
