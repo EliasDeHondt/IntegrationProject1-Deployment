@@ -31,13 +31,14 @@ sudo apt-get install -y git dotnet-sdk-7.0
 # Clone the repository and install the necessary packages
 cd /root && git clone https://$GITLAB_USERNAME:$GITLAB_TOKEN@gitlab.com/kdg-ti/integratieproject-1/202324/23_codeforge/development.git
 
+# Install Ops Agent
+curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+sudo bash /root/add-google-cloud-ops-agent-repo.sh --also-install
+sudo rm -rf /root/add-google-cloud-ops-agent-repo.sh
+
 # Install Node.js and build the application
 wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | bash
 . /.nvm/nvm.sh && nvm install 20.11.1
-
-# Install Ops Agent
-curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
-sudo bash add-google-cloud-ops-agent-repo.sh --also-install
 
 # Build the application
 export HOME=/root
