@@ -437,19 +437,19 @@ function add_permissions_to_service_account() { # Step 17
 function set_metadata() { # Step 17
   local GITLAB_USERNAME="gitlab+deploy-token-4204945"
   local GITLAB_TOKEN="gldt-Dmq-B8x1iiMrAh6J2bGZ"
-  local METADATA_VALUE1="Production"
-  local METADATA_VALUE2=$(gcloud sql instances describe db1 --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
-  local METADATA_VALUE3="5432"
-  local METADATA_VALUE4="codeforge"
-  local METADATA_VALUE5="admin"
-  local METADATA_VALUE6="codeforge.noreply@gmail.com"
-  local METADATA_VALUE7="evqb lztz oqvu kgwc"
+  local ASPNETCORE_ENVIRONMENT="Production"
+  local ASPNETCORE_POSTGRES_HOST=$(gcloud sql instances describe db1 --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
+  local ASPNETCORE_POSTGRES_PORT="5432"
+  local ASPNETCORE_POSTGRES_DATABASE="codeforge"
+  local ASPNETCORE_POSTGRES_USER="admin"
+  local ASPNETCORE_EMAIL="codeforge.noreply@gmail.com"
+  local ASPNETCORE_EMAIL_PASSWORD="evqb lztz oqvu kgwc"
 
   gcloud iam service-accounts keys create service-account-key.json --iam-account=$user_email > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
 
   loading_icon 10 "* Step 18/$global_staps:" &
-  gcloud compute project-info add-metadata --metadata="GITLAB_USERNAME=$GITLAB_USERNAME,GITLAB_TOKEN=$GITLAB_TOKEN,ASPNETCORE_ENVIRONMENT=$METADATA_VALUE1,ASPNETCORE_POSTGRES_HOST=$METADATA_VALUE2,ASPNETCORE_POSTGRES_PORT=$METADATA_VALUE3,ASPNETCORE_POSTGRES_DATABASE=$METADATA_VALUE4,ASPNETCORE_POSTGRES_USER=$METADATA_VALUE5,ASPNETCORE_POSTGRES_PASSWORD=$db_password,ASPNETCORE_STORAGE_BUCKET=$bucket_name,ASPNETCORE_EMAIL=$METADATA_VALUE6,ASPNETCORE_EMAIL_PASSWORD=$METADATA_VALUE7" > ./deployment-script.log 2>&1
+  gcloud compute project-info add-metadata --metadata="GITLAB_USERNAME=$GITLAB_USERNAME,GITLAB_TOKEN=$GITLAB_TOKEN,ASPNETCORE_ENVIRONMENT=$ASPNETCORE_ENVIRONMENT,ASPNETCORE_POSTGRES_HOST=$ASPNETCORE_POSTGRES_HOST,ASPNETCORE_POSTGRES_PORT=$ASPNETCORE_POSTGRES_PORT,ASPNETCORE_POSTGRES_DATABASE=$ASPNETCORE_POSTGRES_DATABASE,ASPNETCORE_POSTGRES_USER=$ASPNETCORE_POSTGRES_USER,ASPNETCORE_POSTGRES_PASSWORD=$db_password,ASPNETCORE_STORAGE_BUCKET=$bucket_name,ASPNETCORE_EMAIL=$ASPNETCORE_EMAIL,ASPNETCORE_EMAIL_PASSWORD=$ASPNETCORE_EMAIL_PASSWORD" > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
   gcloud compute project-info add-metadata --metadata-from-file GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
