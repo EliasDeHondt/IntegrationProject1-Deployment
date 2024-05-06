@@ -61,7 +61,6 @@ function bash_validation() {
   if [ ! -f "./Variables.conf" ]; then error_exit "Variables file not found."; fi
   if [ ! -f "./Startup-Script-Gcloud-DotNet-Ubuntu.sh" ]; then error_exit "Startup script for Ubuntu not found."; fi
   if [ ! -f "./Startup-Script-Gcloud-DotNet-Debian.sh" ]; then error_exit "Startup script for Debian not found."; fi
-
 }
 
 # Functie: Print the loading icon.
@@ -82,6 +81,70 @@ function loading_icon() {
     done
     printf " \b"
     exit 1
+}
+
+# Functie: Select a backup of the SQL instance.
+function backup_configuration_select() {
+  echo -e "*\n* Available Backups:"
+  local backups=$(gcloud sql backups list --instance=$sql_instance_name --format="value(ID,startTime)")
+  local backup_count=$(echo "$backups" | wc -l)
+  if [ $backup_count -eq 0 ]; then error_exit "No backups found."; fi
+    echo "$backups" | nl -w 3 -s "]${reset} " | while read -r line; do
+    echo -e "*   ${blauw}[$line"
+  done
+  echo -e "*\n* Enter the number of the backup you want to select: \c"
+  read backup_number
+  if [[ "$backup_number" =~ ^[0-9]+$ ]]; then
+    if [ $backup_number -gt 0 ] && [ $backup_number -le $backup_count ]; then
+      backup_id=$(echo "$backups" | sed -n "${backup_number}p" | awk '{print $1}')
+    else
+      error_exit "Invalid backup number."
+    fi
+  else
+    error_exit "Invalid backup number."
+  fi
+}
+
+# Function: Select a project and set it as the current project.
+function select_project() {
+  banner_message "Selecting a project."
+  echo -e "*\n* Available projects:"
+  gcloud projects list --format="value(projectId)" | nl -w 3 -s "]${reset} " | while read -r line; do echo -e "*   ${blauw}[$line"; done
+  echo -e "*\n* Enter the project number or ID: \c"
+  read project_input
+  if [[ "$project_input" =~ ^[0-9]+$ ]]; then
+    num_projects=$(gcloud projects list --format="value(projectId)" | wc -l)
+    if (( project_input <= num_projects )); then
+      projectid=$(gcloud projects list --format="value(projectId)" | sed -n "${project_input}p")
+    else
+      error_exit "Invalid project number. Please enter a valid project number."
+    fi
+  else
+    error_exit "Invalid input. Please enter a valid project number."
+  fi
+  projectname=$(gcloud projects describe $projectid --format="value(name)")
+  gcloud config set project $projectid > ./deployment-script.log 2>&1
+  echo "* Selected project: $projectname" && projectid=$projectname
+  sleep 4
+}
+
+# Functie: Undo the project deletion.
+function undo_project_deletion() {
+  echo -e "*"
+  read -p "* Do you want to undo the deletion? (Y/n): " undo
+  if [ "$undo" == "Y" ] || [ "$undo" == "y" ] || [ -z "$undo" ]; then
+    loading_icon 10 "* Restoring project $projectid:" &
+    gcloud projects undelete $projectid --quiet > ./deployment-script.log 2>&1
+    local EXIT_CODE=$?
+    wait
+
+    if [ $EXIT_CODE -eq 0 ]; then success "Project restored successfully."; else error_exit "Failed to restore the project."; fi
+  elif [ "$undo" == "n" ]; then
+    echo -e "*"
+    echo "* Project deletion not undone."
+  else
+    error_exit "Invalid choice."
+  fi
 }
 
 # Functie: Create a new project if it doesn't already exist.
@@ -198,7 +261,7 @@ function create_network_subnet() { # Step 6
 
 # Functie: Create a new firewall rule if it doesn't already exist.
 function create_firewallrule() { # Step 7
-  local FIREWALL_RULE_NAME=codeforge-firewall-rule
+  local FIREWALL_RULE_NAME="codeforge-firewall-rule"
   local EXISTING_FIREWALL_RULE=$(gcloud compute firewall-rules list --format="value(NAME)" | grep -o "^$FIREWALL_RULE_NAME")
 
   if [ -z "$EXISTING_FIREWALL_RULE" ]; then
@@ -238,7 +301,7 @@ function create_router() { # Step 8
 
 # Functie: Create a new Cloud NAT for all instances in the subnet if it doesn't already exist.
 function create_nat() { # Stap 9
-  local NAT_NAME=nat1
+  local NAT_NAME="nat1"
   local EXISTING_NAT=$(gcloud compute routers nats list --router=$router_name --router-region=$region --format="value(NAME)" | grep -o "^$NAT_NAME")
 
   if [ -z "$EXISTING_NAT" ]; then
@@ -301,14 +364,13 @@ function add_vpc_network_peering() { # Step 11
 
 # Functie: Create a new PostgreSQL instance if it doesn't already exist.
 function create_postgres_instance() { # Step 12
-  local INSTANCE_NAME=db1
-  local DATABASE_VERSION=POSTGRES_15
-  local MACHINE_TYPE=db-f1-micro
-  local EXISTING_INSTANCE=$(gcloud sql instances list --filter="name=$INSTANCE_NAME" --format="value(NAME)" 2>/dev/null)
+  local DATABASE_VERSION="POSTGRES_15"
+  local MACHINE_TYPE="db-n1-standard-4" # db-f1-micro
+  local EXISTING_INSTANCE=$(gcloud sql instances list --filter="name=$sql_instance_name" --format="value(NAME)" 2>/dev/null)
 
   if [ -z "$EXISTING_INSTANCE" ]; then
     loading_icon 500 "* Stap 12/$global_staps:" &
-    gcloud sql instances create $INSTANCE_NAME \
+    gcloud sql instances create $sql_instance_name \
       --database-version=$DATABASE_VERSION \
       --tier=$MACHINE_TYPE \
       --region=$region \
@@ -328,18 +390,17 @@ function create_postgres_instance() { # Step 12
 
 # Functie: Create a new PostgreSQL user if it doesn't already exist.
 function create_postgres_user() { # Step 13
-  local INSTANCE_NAME=db1
-  local DATABASE_USER=admin
-  local EXISTING_USER=$(gcloud sql users list --instance=$INSTANCE_NAME | grep -o "^$DATABASE_USER")
+  local DATABASE_USER="admin"
+  local EXISTING_USER=$(gcloud sql users list --instance=$sql_instance_name | grep -o "^$DATABASE_USER")
 
   if [ -z "$EXISTING_USER" ]; then
     loading_icon 10 "* Stap 13/$global_staps:" &
     gcloud sql users create $DATABASE_USER \
-      --instance=$INSTANCE_NAME \
+      --instance=$sql_instance_name \
       --password=$db_password > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
     gcloud sql users delete postgres \
-      --instance=$INSTANCE_NAME --quiet > ./deployment-script.log 2>&1
+      --instance=$sql_instance_name --quiet > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
     wait
 
@@ -352,14 +413,13 @@ function create_postgres_user() { # Step 13
 
 # Functie: Create a new PostgreSQL database if it doesn't already exist.
 function create_postgres_database() { # Step 14
-  local INSTANCE_NAME=db1
-  local DATABASE_NAME=codeforge
-  local EXISTING_DATABASE=$(gcloud sql databases list --instance=$INSTANCE_NAME --format="value(NAME)" | grep -o "^$DATABASE_NAME")
+  local DATABASE_NAME="codeforge"
+  local EXISTING_DATABASE=$(gcloud sql databases list --instance=$sql_instance_name --format="value(NAME)" | grep -o "^$DATABASE_NAME")
 
   if [ -z "$EXISTING_DATABASE" ]; then
     loading_icon 10 "* Stap 14/$global_staps:" &
     gcloud sql databases create $DATABASE_NAME \
-      --instance=$INSTANCE_NAME > ./deployment-script.log 2>&1
+      --instance=$sql_instance_name > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
     wait
 
@@ -438,7 +498,7 @@ function set_metadata() { # Step 17
   local GITLAB_USERNAME="gitlab+deploy-token-4204945"
   local GITLAB_TOKEN="gldt-Dmq-B8x1iiMrAh6J2bGZ"
   local ASPNETCORE_ENVIRONMENT="Production"
-  local ASPNETCORE_POSTGRES_HOST=$(gcloud sql instances describe db1 --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
+  local ASPNETCORE_POSTGRES_HOST=$(gcloud sql instances describe $sql_instance_name --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
   local ASPNETCORE_POSTGRES_PORT="5432"
   local ASPNETCORE_POSTGRES_DATABASE="codeforge"
   local ASPNETCORE_POSTGRES_USER="admin"
@@ -461,7 +521,7 @@ function set_metadata() { # Step 17
 
 # Functie: Create a new instance template if it doesn't already exist.
 function create_instance_templates() { # Step 19
-  local MACHINE_TYPE=n1-standard-4
+  local MACHINE_TYPE="n1-standard-4"
   local EXISTING_TEMPLATE=$(gcloud compute instance-templates list --format="value(NAME)" | grep -o "^$template_name")
 
   if [ -z "$EXISTING_TEMPLATE" ]; then
@@ -518,11 +578,11 @@ function create_instance_group() { # Step 20
 
 # Functie: Create a new load balancer if it doesn't already exist.
 function create_load_balancer() { # Step 21
-  local BACKEND_SERVICE_NAME=codeforge-backend-service
-  local HEALTH_CHECK_NAME=codeforge-health-check
-  local URL_MAP_NAME=codeforge-url-map
-  local TARGET_PROXY_NAME=codeforge-target-proxy
-  local FORWARDING_RULE_NAME=codeforge-forwarding-rule
+  local BACKEND_SERVICE_NAME="codeforge-backend-service"
+  local HEALTH_CHECK_NAME="codeforge-health-check"
+  local URL_MAP_NAME="codeforge-url-map"
+  local TARGET_PROXY_NAME="codeforge-target-proxy"
+  local FORWARDING_RULE_NAME="codeforge-forwarding-rule"
   local EXISTING_LOAD_BALANCER=$(gcloud compute forwarding-rules list --format="value(NAME)" | grep -o "^$FORWARDING_RULE_NAME")
 
   if [ -z "$EXISTING_LOAD_BALANCER" ]; then
@@ -650,7 +710,7 @@ function delete_project() { # Choice 2
   local EXISTING_PROJECTS=$(gcloud projects list 2>/dev/null | grep -o "^$projectid")
 
   if [ -z "$EXISTING_PROJECTS" ]; then error_exit "Project does not exist."; fi
-
+  banner_message "Deleting the infrastructure."
   loading_icon 10 "* Deleting project $projectid:" &
   gcloud projects delete $projectid --quiet > ./deployment-script.log 2>&1
   local EXIT_CODE=$?
@@ -659,69 +719,138 @@ function delete_project() { # Choice 2
   if [ $EXIT_CODE -eq 0 ]; then success "Project deleted successfully."; else error_exit "Failed to delete the project."; fi
 }
 
-# Functie: Undo the project deletion.
-function undo_project_deletion() {
+# Functie: Backup configuration of the SQL instance.
+function backup_configuration() { # Choice 4
+  banner_message "Backup configuration of the SQL instance."
+  # This is a small sub menu for backup configuration of the SQL instance.
+  echo -e "*\n* ${blauw}[1]${reset} Create a backup of the SQL instance\n* ${blauw}[2]${reset} Delete the SQL instance\n* ${blauw}[3]${reset} Restore the SQL instance from the backup\n* ${blauw}[4]${reset} List the backups of the SQL instance\n*"
+  read -p "* Enter your choice: " backup_choice
   echo -e "*"
-  read -p "* Do you want to undo the deletion? (Y/n): " undo
-  if [ "$undo" == "Y" ] || [ "$undo" == "y" ] || [ -z "$undo" ]; then
-    loading_icon 10 "* Restoring project $projectid:" &
-    gcloud projects undelete $projectid --quiet > ./deployment-script.log 2>&1
-    local EXIT_CODE=$?
-    wait
+  case "$backup_choice" in
+    1) backup_configuration_create;;
+    2) backup_configuration_delete;;
+    3) backup_configuration_restore;;
+    4) backup_configuration_list;;
+    *) error_exit "Invalid choice.";;
+  esac
+}
 
-    if [ $EXIT_CODE -eq 0 ]; then success "Project restored successfully."; else error_exit "Failed to restore the project."; fi
-  elif [ "$undo" == "n" ]; then
-    echo -e "*"
-    echo "* Project deletion not undone."
-  else
-    error_exit "Invalid choice."
-  fi
+# Functie: Create a backup of the SQL instance.
+function backup_configuration_create() { # Choice 4.1
+  banner_message "Creating a backup of the SQL instance."
+  local DESCRIPTION="CodeForge Backup $(date +'%Y-%m-%d %H:%M:%S')"
+  local BACKUP_LOCATION="us-central1"
+
+  loading_icon 40 "* Creating backup of the SQL instance:" &
+  gcloud sql backups create \
+    --instance=$sql_instance_name \
+    --description="$DESCRIPTION" \
+    --location=$BACKUP_LOCATION > ./deployment-script.log 2>&1
+  local EXIT_CODE=$?
+  wait
+
+  if [ $EXIT_CODE -eq 0 ]; then success "Backup created successfully."; else error_exit "Failed to create the backup."; fi
+  echo -e "${line}"
+  sleep 10
+  main
+}
+
+# Functie: Delete a backup of the SQL instance.
+function backup_configuration_delete() { # Choice 4.2
+  banner_message "Deleting the backup of the SQL instance."
+  backup_configuration_select
+
+  loading_icon 40 "* Deleting backup of the SQL instance:" &
+  gcloud sql backups delete $backup_id --instance=$sql_instance_name --quiet > ./deployment-script.log 2>&1
+  local EXIT_CODE=$?
+  wait
+
+  if [ $EXIT_CODE -eq 0 ]; then success "Backup deleted successfully."; else error_exit "Failed to delete the backup."; fi
+  echo -e "${line}"
+  sleep 10
+  main
+}
+
+# Functie: Restore the SQL instance from the backup.
+function backup_configuration_restore() { # Choice 4.3
+  banner_message "Restoring the SQL instance from the backup."
+  backup_configuration_select
+
+  loading_icon 40 "* Restoring the SQL instance from the backup:" &
+  gcloud sql backups restore $backup_id --restore-instance=$sql_instance_name --quiet > ./deployment-script.log 2>&1
+  local EXIT_CODE=$?
+  wait
+
+  if [ $EXIT_CODE -eq 0 ]; then success "SQL instance restored successfully."; else error_exit "Failed to restore the SQL instance."; fi
+  echo -e "${line}"
+  sleep 10
+  main
+}
+
+# Functie: List the backups of the SQL instance.
+function backup_configuration_list() { # Choice 4.4
+  banner_message "Listing the backups of the SQL instance."
+  echo -e "* List of Backups:"
+  gcloud sql backups list --instance=$sql_instance_name --format="value(name,description)" | while read -r line; do echo -e "*   $line"; done
+  echo -e "*\n* ${yellow}To exit the dashboard, press CTRL + C or wait for 1 minute.${reset}\n*"
+  echo -e "${line}"
+  sleep 60
+  main
 }
 
 # Functie: View the CodeForge dashboard.
-function view_dashboard() { # Choice 4
+function view_dashboard() { # Choice 5
   local IP_ADDRESS=$(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")
   local NAME=$(gcloud compute forwarding-rules list --format="value(NAME)")
   local URL="https://$domain_name"
   local INSTANCE_GROUP_SIZE=$(gcloud compute instance-groups list --format="value(SIZE)" | grep -o "^[0-9]*")
   local INSTANCE_GROUP_IPS=$(gcloud compute instances list --format="value(networkInterfaces[0].networkIP)" | tr '\n' ' ')
-  local SQL_IP=$(gcloud sql instances describe db1 --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
+  local SQL_IP=$(gcloud sql instances describe $sql_instance_name --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
   local BUCKET_NAME=$(gsutil ls | grep -o "${bucket_name}")
   local MIN_REPLICAS=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.minNumReplicas)")
   local MAX_REPLICAS=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.maxNumReplicas)")
   local COOL_DOWN_PERIOD=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.coolDownPeriodSec)")
   local TARGET_CPU_UTILIZATION=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.cpuUtilization.utilizationTarget)")
 
-  while true; do
-    banner_message "Viewing the CodeForge dashboard."
-    echo -e "*\n* Load Balancer Information:"
-    echo -e "*   | Name: $NAME"
-    echo -e "*   | URL: $URL"
-    echo -e "*   | IP Address: $IP_ADDRESS"
-    echo -e "*\n* Instance Group Information:"
-    echo -e "*   | Number of Instances: $INSTANCE_GROUP_SIZE"
-    echo -e "*   | IP Addresses: $INSTANCE_GROUP_IPS"
-    echo -e "*\n* SQL Instance Information:"
-    echo -e "*   | IP Address: $SQL_IP"
-    echo -e "*\n* Storage Bucket Information:"
-    echo -e "*   | Name: $bucket_name"
-    echo -e "*\n* Horizontal Scaling Information:"
-    echo -e "*   | Minimum Replicas: $MIN_REPLICAS"
-    echo -e "*   | Maximum Replicas: $MAX_REPLICAS"
-    echo -e "*   | Cool Down Period: $COOL_DOWN_PERIOD"
-    echo -e "*   | Target CPU Utilization: $TARGET_CPU_UTILIZATION"
-    echo -e "*\n* ${yellow}Refreshing the dashboard every 5 seconds.${reset}"
-    echo -e "*\n* ${yellow}To exit the dashboard, press CTRL+C.${reset}"
-    echo -e "${line}"
-    sleep 5
-  done
+  banner_message "Viewing the CodeForge dashboard."
+  echo -e "*\n* Load Balancer Information:"
+  echo -e "*   | Name: $NAME"
+  echo -e "*   | URL: $URL"
+  echo -e "*   | IP Address: $IP_ADDRESS"
+  echo -e "*\n* Instance Group Information:"
+  echo -e "*   | Number of Instances: $INSTANCE_GROUP_SIZE"
+  echo -e "*   | IP Addresses: $INSTANCE_GROUP_IPS"
+  echo -e "*\n* SQL Instance Information:"
+  echo -e "*   | IP Address: $SQL_IP"
+  echo -e "*\n* Storage Bucket Information:"
+  echo -e "*   | Name: $bucket_name"
+  echo -e "*\n* Horizontal Scaling Information:"
+  echo -e "*   | Minimum Replicas: $MIN_REPLICAS"
+  echo -e "*   | Maximum Replicas: $MAX_REPLICAS"
+  echo -e "*   | Cool Down Period: $COOL_DOWN_PERIOD"
+  echo -e "*   | Target CPU Utilization: $TARGET_CPU_UTILIZATION"
+  echo -e "*\n* ${yellow}To exit the dashboard, press CTRL + C or wait for 1 minute.${reset}\n*"
+  echo -e "${line}"
+  sleep 60
+  main
+}
+
+# Functie: View the log file.
+function view_log_file() { # Choice 6
+  banner_message "          Log File          "
+  echo -e "*"
+  sed 's/^/* /g' ./deployment-script.log
+  echo -e "*"
+  echo -e "${line}"
+  sleep 30
+  main
 }
 
 # Functie: Send support message via Discord.
-function send_support_message() { # Choice 5
+function send_support_message() { # Choice 7
   local WEBHOOK_URL="https://discord.com/api/webhooks/1234178845838413864/R8MEa3bwW91csJ_z1m5N4BG28BZmnBhvqakwI9V6QwufUflfF6fHR3l9RjNYq0ZO779F"
   local MESSAGE="Support message from the CodeForge deployment script. Please help me with the following issue:"
-
+  banner_message "          Support          "
   echo -e "*"
   read -p "* Enter your first name: " first_name
   read -p "* Enter your last name: " last_name
@@ -735,43 +864,21 @@ function send_support_message() { # Choice 5
   echo -e "${line}"
   sleep 30
   main
-} 
-
-# Function: Select a project and set it as the current project.
-function select_project() {
-  echo -e "*\n* Available projects:"
-  gcloud projects list --format="value(projectId)" | nl -w 3 -s "]${reset} " | while read -r line; do echo -e "*   ${blauw}[$line"; done
-  echo -e "*\n* Enter the project number or ID: \c"
-  read project_input
-  if [[ "$project_input" =~ ^[0-9]+$ ]]; then
-    num_projects=$(gcloud projects list --format="value(projectId)" | wc -l)
-    if (( project_input <= num_projects )); then
-      projectid=$(gcloud projects list --format="value(projectId)" | sed -n "${project_input}p")
-    else
-      error_exit "Invalid project number. Please enter a valid project number."
-    fi
-  else
-    error_exit "Invalid input. Please enter a valid project number."
-  fi
-  projectname=$(gcloud projects describe $projectid --format="value(name)")
-  gcloud config set project $projectid > ./deployment-script.log 2>&1
-  echo "* Selected project: $projectname" && projectid=$projectname
-  sleep 4
 }
 
 # Functie: Credits of the developers.
-function credits() { # Choice 6
-  local COLOR_ELIAS_DE_HONDT="\033[96m" # Light cyan
-  local COLOR_VINCENT_VERBOVEN="\e[91m" # Light red
-  local COLOR_VERA_WISE="\e[95m" # Light magenta
-  local COLOR_MATTHIAS_HENDRICKX="\e[92m" # Light green
-  local COLOR_JANA_YANG="\e[93m" # Light yellow
+function credits() { # Choice 8
+  local COLOR_ELIAS_DE_HONDT="\033[96m"             # Light cyan
+  local COLOR_VINCENT_VERBOVEN="\e[91m"             # Light red
+  local COLOR_VERA_WISE="\e[95m"                    # Light magenta
+  local COLOR_MATTHIAS_HENDRICKX="\e[92m"           # Light green
+  local COLOR_JANA_YANG="\e[93m"                    # Light yellow
   local GITGUB_URL_ELIAS_DE_HONDT="https://github.com/EliasDeHondt"
   local GITGUB_URL_VINCENT_VERBOVEN="https://github.com/Meastro85"
   local GITGUB_URL_VERA_WISE="https://github.com/VW03"
   local GITGUB_URL_MATTHIAS_HENDRICKX="https://github.com/MatthiasHendrickx"
   local GITGUB_URL_JANA_YANG="https://github.com/janayang"
-
+  banner_message "          Credits          "
   echo -e "*\n* ${COLOR_ELIAS_DE_HONDT}Elias De Hondt${reset}"
   echo -e "*   | ${COLOR_ELIAS_DE_HONDT}GitHub: ${GITGUB_URL_ELIAS_DE_HONDT}${reset}"
   echo -e "*\n* ${COLOR_VINCENT_VERBOVEN}Vincent Verboven${reset}"
@@ -781,7 +888,7 @@ function credits() { # Choice 6
   echo -e "*\n* ${COLOR_MATTHIAS_HENDRICKX}Matthias Hendrickx${reset}"
   echo -e "*   | ${COLOR_MATTHIAS_HENDRICKX}GitHub: ${GITGUB_URL_MATTHIAS_HENDRICKX}${reset}"
   echo -e "*\n* ${COLOR_JANA_YANG}Jana Yang${reset}"
-  echo -e "*   | ${COLOR_JANA_YANG}GitHub: ${GITGUB_URL_JANA_YANG}${reset}"
+  echo -e "*   | ${COLOR_JANA_YANG}GitHub: ${GITGUB_URL_JANA_YANG}${reset}\n*"
   echo -e "${line}"
   sleep 10
   main
@@ -792,38 +899,40 @@ function main { # Start the script.
   banner_message "Welcome to the CodeForge deployment script!"
   bash_validation
 
-  echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Update the infrastructure\n* ${blauw}[3]${reset} Delete the infrastructures\n* ${blauw}[4]${reset} View dashboard\n* ${blauw}[5]${reset} Support\n* ${blauw}[6]${reset} Credits\n* ${blauw}[7]${reset} Exit"
+  echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Update the infrastructure\n* ${blauw}[3]${reset} Delete the infrastructures\n* ${blauw}[4]${reset} Backup Configuration\n* ${blauw}[5]${reset} View dashboard\n* ${blauw}[6]${reset} View Log File\n* ${blauw}[7]${reset} Support\n* ${blauw}[8]${reset} Credits\n* ${blauw}[9]${reset} Exit"
   read -p "* Enter the number of your choice: " choice
   echo -e "*"
-  if [ "$choice" == "1" ]; then
-    banner_message "Creating the infrastructure."
-    create_infrastructure 0
-    success_exit "Infrastructure created successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*") (https://$domain_name) $projectid"
-  elif [ "$choice" == "2" ]; then
-    banner_message "Updating the infrastructure."
-    create_infrastructure 1
-    success_exit "Infrastructure updated successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*") (https://$domain_name) $projectid"
-  elif [ "$choice" == "3" ]; then
-    banner_message "Deleting the infrastructure."
-    select_project
-    delete_project; wait
-    undo_project_deletion; wait
-    success_exit "Infrastructure deleted successfully."
-  elif [ "$choice" == "4" ]; then
-    banner_message "Viewing the CodeForge dashboard."
-    select_project
-    view_dashboard
-  elif [ "$choice" == "5" ]; then
-    banner_message "          Support          "
-    send_support_message
-  elif [ "$choice" == "6" ]; then
-    banner_message "          Credits          "
-    credits
-  elif [ "$choice" == "7" ]; then
-    success_exit "Exiting script."
-  else
-    error_exit "Invalid choice."
-  fi
+  case "$choice" in
+    1)
+      banner_message "Creating the infrastructure."
+      create_infrastructure 0
+      success_exit "Infrastructure created successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*") (https://$domain_name) $projectid"
+      ;;
+    2)
+      banner_message "Updating the infrastructure."
+      create_infrastructure 1
+      success_exit "Infrastructure updated successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*") (https://$domain_name) $projectid"
+      ;;
+    3)
+      select_project
+      delete_project; wait
+      undo_project_deletion; wait
+      success_exit "Infrastructure deleted successfully."
+      ;;
+    4)
+      select_project
+      backup_configuration
+      ;;
+    5)
+      select_project
+      view_dashboard
+      ;;
+    6) view_log_file;;
+    7) send_support_message;;
+    8) credits;;
+    9) success_exit "Exiting script.";;
+    *) error_exit "Invalid choice.";;
+  esac
 }
 
 main # Start the script.
