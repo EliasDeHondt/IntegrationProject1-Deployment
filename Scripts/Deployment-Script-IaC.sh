@@ -50,8 +50,8 @@ function bash_validation() {
   # Check if the script is run using Bash.
   if [ -z "$BASH_VERSION" ]; then error_exit "This script must be run using Bash."; fi
 
-  # Check if the script is run as root.
-  [ "$EUID" -ne 0 ] && error_exit "Script must be run as root: sudo $0"
+  # Check if the script is run as not root.
+  if [ "$EUID" -eq 0 ]; then error_exit "This script must not be run as root."; fi
 
   # Check if the Google Cloud CLI is installed.
   if ! command -v gcloud &> /dev/null; then error_exit "Google Cloud CLI is not installed. Please install it before running this script."; fi
@@ -365,14 +365,13 @@ function add_vpc_network_peering() { # Step 11
 # Functie: Create a new PostgreSQL instance if it doesn't already exist.
 function create_postgres_instance() { # Step 12
   local DATABASE_VERSION="POSTGRES_15"
-  local MACHINE_TYPE="db-n1-standard-4" # db-f1-micro
   local EXISTING_INSTANCE=$(gcloud sql instances list --filter="name=$sql_instance_name" --format="value(NAME)" 2>/dev/null)
 
   if [ -z "$EXISTING_INSTANCE" ]; then
     loading_icon 500 "* Stap 12/$global_staps:" &
     gcloud sql instances create $sql_instance_name \
       --database-version=$DATABASE_VERSION \
-      --tier=$MACHINE_TYPE \
+      --tier=$machine_type_db \
       --region=$region \
       --network=$network_name \
       --no-assign-ip \
@@ -495,8 +494,6 @@ function add_permissions_to_service_account() { # Step 17
 
 # Functie: Set the metadata if it doesn't already exist.
 function set_metadata() { # Step 17
-  local GITLAB_USERNAME="gitlab+deploy-token-4204945"
-  local GITLAB_TOKEN="gldt-Dmq-B8x1iiMrAh6J2bGZ"
   local ASPNETCORE_ENVIRONMENT="Production"
   local ASPNETCORE_POSTGRES_HOST=$(gcloud sql instances describe $sql_instance_name --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
   local ASPNETCORE_POSTGRES_PORT="5432"
@@ -509,7 +506,7 @@ function set_metadata() { # Step 17
   local EXIT_CODE=$?
 
   loading_icon 10 "* Step 18/$global_staps:" &
-  gcloud compute project-info add-metadata --metadata="GITLAB_USERNAME=$GITLAB_USERNAME,GITLAB_TOKEN=$GITLAB_TOKEN,ASPNETCORE_ENVIRONMENT=$ASPNETCORE_ENVIRONMENT,ASPNETCORE_POSTGRES_HOST=$ASPNETCORE_POSTGRES_HOST,ASPNETCORE_POSTGRES_PORT=$ASPNETCORE_POSTGRES_PORT,ASPNETCORE_POSTGRES_DATABASE=$ASPNETCORE_POSTGRES_DATABASE,ASPNETCORE_POSTGRES_USER=$ASPNETCORE_POSTGRES_USER,ASPNETCORE_POSTGRES_PASSWORD=$db_password,ASPNETCORE_STORAGE_BUCKET=$bucket_name,ASPNETCORE_EMAIL=$ASPNETCORE_EMAIL,ASPNETCORE_EMAIL_PASSWORD=$ASPNETCORE_EMAIL_PASSWORD" > ./deployment-script.log 2>&1
+  gcloud compute project-info add-metadata --metadata="GITLAB_USERNAME=$gitlab_username,GITLAB_TOKEN=$gitlab_token,ASPNETCORE_ENVIRONMENT=$ASPNETCORE_ENVIRONMENT,ASPNETCORE_POSTGRES_HOST=$ASPNETCORE_POSTGRES_HOST,ASPNETCORE_POSTGRES_PORT=$ASPNETCORE_POSTGRES_PORT,ASPNETCORE_POSTGRES_DATABASE=$ASPNETCORE_POSTGRES_DATABASE,ASPNETCORE_POSTGRES_USER=$ASPNETCORE_POSTGRES_USER,ASPNETCORE_POSTGRES_PASSWORD=$db_password,ASPNETCORE_STORAGE_BUCKET=$bucket_name,ASPNETCORE_EMAIL=$ASPNETCORE_EMAIL,ASPNETCORE_EMAIL_PASSWORD=$ASPNETCORE_EMAIL_PASSWORD" > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
   gcloud compute project-info add-metadata --metadata-from-file GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json > ./deployment-script.log 2>&1
   EXIT_CODE=$((EXIT_CODE + $?))
@@ -521,13 +518,12 @@ function set_metadata() { # Step 17
 
 # Functie: Create a new instance template if it doesn't already exist.
 function create_instance_templates() { # Step 19
-  local MACHINE_TYPE="n1-standard-4"
   local EXISTING_TEMPLATE=$(gcloud compute instance-templates list --format="value(NAME)" | grep -o "^$template_name")
 
   if [ -z "$EXISTING_TEMPLATE" ]; then
     loading_icon 10 "* Stap 19/$global_staps:" &
     gcloud compute instance-templates create $template_name \
-      --machine-type=$MACHINE_TYPE \
+      --machine-type=$machine_type_vm \
       --image-project=$image_project \
       --image-family=$image_family \
       --no-address \
@@ -545,27 +541,22 @@ function create_instance_templates() { # Step 19
 
 # Functie: Create a new instance group if it doesn't already exist.
 function create_instance_group() { # Step 20
-  local INSTANCE_GROUP_SIZE=1
-  local MIN_REPLICAS=1
-  local MAX_REPLICAS=5
-  local COOL_DOWN_PERIOD=60           # 1 Minute
-  local TARGET_CPU_UTILIZATION=0.80   # 80%
   local EXISTING_INSTANCE_GROUP=$(gcloud compute instance-groups list --format="value(NAME)" | grep -o "^$instance_group_name")
 
   if [ -z "$EXISTING_INSTANCE_GROUP" ]; then
     loading_icon 20 "* Step 20/$global_staps:" &
     gcloud compute instance-groups managed create $instance_group_name \
       --base-instance-name=$instance_group_name \
-      --size=$INSTANCE_GROUP_SIZE \
+      --size=$instance_group_size \
       --template=$template_name \
       --zone=$zone > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
     gcloud compute instance-groups managed set-autoscaling $instance_group_name \
       --zone=$zone \
-      --min-num-replicas=$MIN_REPLICAS \
-      --max-num-replicas=$MAX_REPLICAS \
-      --cool-down-period=$COOL_DOWN_PERIOD \
-      --target-cpu-utilization=$TARGET_CPU_UTILIZATION > ./deployment-script.log 2>&1
+      --min-num-replicas=$min_replicas \
+      --max-num-replicas=$max_replicas \
+      --cool-down-period=$cool_down_period \
+      --target-cpu-utilization=$target_cpu_utilization > ./deployment-script.log 2>&1
     EXIT_CODE=$((EXIT_CODE + $?))
     wait
 
@@ -631,6 +622,7 @@ function create_load_balancer() { # Step 21
 function create_infrastructure { # Choice 1 and 3
   # Asking for the choice of overriding the default variables.
   echo -e "*"
+  echo -e "* ${yellow}Note: Default = Variables.conf${reset}"
   read -p "* Do you want to override the default variables? (Y/n): " var_choice
   if [ "$var_choice" == "Y" ] || [ "$var_choice" == "y" ] || [ -z "$var_choice" ]; then
     echo -e "*"
