@@ -50,8 +50,8 @@ function bash_validation() {
   # Check if the script is run using Bash.
   if [ -z "$BASH_VERSION" ]; then error_exit "This script must be run using Bash."; fi
 
-  # Check if the script is run as not root.
-  if [ "$EUID" -eq 0 ]; then error_exit "This script must not be run as root."; fi
+  # Check if the script is run as root.
+  if [ "$EUID" -ne 0 ]; then error_exit "Please run this script as root."; fi
 
   # Check if the Google Cloud CLI is installed.
   if ! command -v gcloud &> /dev/null; then error_exit "Google Cloud CLI is not installed. Please install it before running this script."; fi
