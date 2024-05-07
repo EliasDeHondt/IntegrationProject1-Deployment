@@ -43,4 +43,7 @@ wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.39.0/install.sh | 
 # Build the application
 export HOME=/root
 cd /root/development/MVC/ClientApp && . /.nvm/nvm.sh && npm rebuild && npm install && npm run build
-cd /root/development/MVC && dotnet publish /root/development/MVC/MVC.csproj -c Release -o /root/app && dotnet /root/app/MVC.dll -urls=http://0.0.0.0:5000
+
+# Start the application
+cd /root/development/MVC && dotnet publish /root/development/MVC/MVC.csproj -c Release -o /root/app
+cd /root/app && dotnet MVC.dll --urls=http://0.0.0.0:5000
