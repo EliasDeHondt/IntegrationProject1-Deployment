@@ -45,8 +45,6 @@ function banner_message() {
 
 # Functie: Bash validatie.
 function bash_validation() {
-  touch ./deployment-script.log
-
   # Check if the script is run using Bash.
   if [ -z "$BASH_VERSION" ]; then error_exit "This script must be run using Bash."; fi
 
@@ -57,7 +55,7 @@ function bash_validation() {
   if ! command -v gcloud &> /dev/null; then error_exit "Google Cloud CLI is not installed. Please install it before running this script."; fi
 
   # Check if the startup script exists.
-  if [ ! -f "./deployment-script.log" ]; then error_exit "Failed to create the log file."; fi
+  if [ ! -f "./deployment-script.log" ]; then touch ./deployment-script.log; fi
   if [ ! -f "./Variables.conf" ]; then error_exit "Variables file not found."; fi
   if [ ! -f "./Startup-Script-Gcloud-DotNet-Ubuntu.sh" ]; then error_exit "Startup script for Ubuntu not found."; fi
   if [ ! -f "./Startup-Script-Gcloud-DotNet-Debian.sh" ]; then error_exit "Startup script for Debian not found."; fi
@@ -183,12 +181,12 @@ function set_project() { # Step 2
 
 # Functie: Link the billing account to the project if it's not already linked.
 function link_billing_account() { # Step 3
-  local CURRENT_BILLING_ACCOUNT=$(gcloud beta billing projects describe $(gcloud config get-value project) --format="value(billingAccountName)")
+  local CURRENT_BILLING_ACCOUNT=$(gcloud billing projects describe $(gcloud config get-value project) --format="value(billingAccountName)")
 
   if [ -z "$CURRENT_BILLING_ACCOUNT" ]; then
     loading_icon 10 "* Step 3/$global_staps:" &
-    billing_account=$(gcloud beta billing accounts list --format="value(ACCOUNT_ID)" | head -n 1)
-    gcloud beta billing projects link $(gcloud config get-value project) \
+    billing_account=$(gcloud billing accounts list --format="value(ACCOUNT_ID)" | head -n 1)
+    gcloud billing projects link $(gcloud config get-value project) \
       --billing-account="$billing_account" > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
     wait
