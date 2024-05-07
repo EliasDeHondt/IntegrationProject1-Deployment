@@ -11,19 +11,19 @@ source ./Variables.conf
 
 # Functie: Error afhandeling.
 function error_exit() {
-  echo -e "\n*\n* ${rood}$1${reset}\n*\n* Exiting script.\n${line}"
+  echo -e "\n*\n* ${red}$1${reset}\n*\n* Exiting script.\n${line}"
   exit 1
 }
 
 # Functie: Succes afhandeling.
 function success_exit() {
-  echo -e "*\n* ${groen}$1${reset}\n*\n${line}"
+  echo -e "*\n* ${green}$1${reset}\n*\n${line}"
   exit 0
 }
 
 # Functie: Succes afhandeling.
 function success() {
-  echo -e "\n*\n* ${groen}$1${reset}\n*"
+  echo -e "\n*\n* ${green}$1${reset}\n*"
 }
 
 # Functie: Skip afhandeling.
@@ -39,7 +39,7 @@ function banner_message() {
   line="*$(printf "%${LENGTH}s" | tr ' ' '*')*"
   local LINE1="*$(printf "%${LENGTH}s" | tr ' ' ' ')*"
   echo "$line" && echo "$LINE1"
-  echo -e "* ${blauw}$MESSAGE${reset} *"
+  echo -e "* ${blue}$MESSAGE${reset} *"
   echo "$LINE1" && echo "$line"
 }
 
@@ -90,7 +90,7 @@ function backup_configuration_select() {
   local backup_count=$(echo "$backups" | wc -l)
   if [ $backup_count -eq 0 ]; then error_exit "No backups found."; fi
     echo "$backups" | nl -w 3 -s "]${reset} " | while read -r line; do
-    echo -e "*   ${blauw}[$line"
+    echo -e "*   ${blue}[$line"
   done
   echo -e "*\n* Enter the number of the backup you want to select: \c"
   read backup_number
@@ -109,7 +109,7 @@ function backup_configuration_select() {
 function select_project() {
   banner_message "Selecting a project."
   echo -e "*\n* Available projects:"
-  gcloud projects list --format="value(projectId)" | nl -w 3 -s "]${reset} " | while read -r line; do echo -e "*   ${blauw}[$line"; done
+  gcloud projects list --format="value(projectId)" | nl -w 3 -s "]${reset} " | while read -r line; do echo -e "*   ${blue}[$line"; done
   echo -e "*\n* Enter the project number or ID: \c"
   read project_input
   if [[ "$project_input" =~ ^[0-9]+$ ]]; then
@@ -643,7 +643,7 @@ function create_infrastructure { # Choice 1 and 3
   # Asking for the choice of Debian or Ubuntu for VMs.
   banner_message "Creating the infrastructure."
   echo -e "*"
-  echo -e "* Which OS do you want to use for the VMs? (Default: Ubuntu):\n* ${blauw}[1]${reset} Ubuntu\n* ${blauw}[2]${reset} Debian\n*"
+  echo -e "* Which OS do you want to use for the VMs? (Default: Ubuntu):\n* ${blue}[1]${reset} Ubuntu\n* ${blue}[2]${reset} Debian\n*"
   read -p "* Enter your choice: " os_choice
   if [ "$os_choice" == "1" ] || [ -z "$os_choice" ]; then
     image_project=ubuntu-os-cloud
@@ -715,7 +715,7 @@ function delete_project() { # Choice 2
 function backup_configuration() { # Choice 4
   banner_message "Backup configuration of the SQL instance."
   # This is a small sub menu for backup configuration of the SQL instance.
-  echo -e "*\n* ${blauw}[1]${reset} Create a backup of the SQL instance\n* ${blauw}[2]${reset} Delete the SQL instance\n* ${blauw}[3]${reset} Restore the SQL instance from the backup\n* ${blauw}[4]${reset} List the backups of the SQL instance\n*"
+  echo -e "*\n* ${blue}[1]${reset} Create a backup of the SQL instance\n* ${blue}[2]${reset} Delete the SQL instance\n* ${blue}[3]${reset} Restore the SQL instance from the backup\n* ${blue}[4]${reset} List the backups of the SQL instance\n*"
   read -p "* Enter your choice: " backup_choice
   echo -e "*"
   case "$backup_choice" in
@@ -891,7 +891,7 @@ function main { # Start the script.
   banner_message "Welcome to the CodeForge deployment script!"
   bash_validation
 
-  echo -e "*\n* ${blauw}[1]${reset} Create the infrastructure\n* ${blauw}[2]${reset} Update the infrastructure\n* ${blauw}[3]${reset} Delete the infrastructures\n* ${blauw}[4]${reset} Backup Configuration\n* ${blauw}[5]${reset} View dashboard\n* ${blauw}[6]${reset} View Log File\n* ${blauw}[7]${reset} Support\n* ${blauw}[8]${reset} Credits\n* ${blauw}[9]${reset} Exit"
+  echo -e "*\n* ${blue}[1]${reset} Create the infrastructure\n* ${blue}[2]${reset} Update the infrastructure\n* ${blue}[3]${reset} Delete the infrastructures\n* ${blue}[4]${reset} Backup Configuration\n* ${blue}[5]${reset} View dashboard\n* ${blue}[6]${reset} View Log File\n* ${blue}[7]${reset} Support\n* ${blue}[8]${reset} Credits\n* ${blue}[9]${reset} Exit"
   read -p "* Enter the number of your choice: " choice
   echo -e "*"
   case "$choice" in
