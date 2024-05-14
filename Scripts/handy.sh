@@ -61,4 +61,4 @@ gcloud compute forwarding-rules list --format="value(IPAddress)"
 
 
 # Delete the vm instance.
-gcloud compute instances delete codeforge-instance-group-hl65 --zone=us-central1-c --quiet
+gcloud compute instances delete codeforge-instance-group-432q --zone=us-central1-c --quiet
