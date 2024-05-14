@@ -5,7 +5,7 @@
 # @since 01/03/2024        #
 ############################
 
-projectid=codeforge-20240513113822
+projectid=codeforge-20240514045342
 
 # Cascading delete for instance template.
 gcloud compute forwarding-rules delete codeforge-forwarding-rule --global --quiet
@@ -14,6 +14,9 @@ gcloud compute url-maps delete codeforge-url-map --quiet
 gcloud compute backend-services delete codeforge-backend-service --global --quiet
 gcloud compute instance-groups managed delete codeforge-instance-group --zone=us-central1-c --quiet
 gcloud compute instance-templates delete codeforge-template --quiet
+
+# Delete the vm instance.
+gcloud compute instances delete codeforge-instance-group-432q --zone=us-central1-c --quiet
 
 # Create a new instance template.
 gcloud compute instance-templates create codeforge-template \
@@ -58,7 +61,3 @@ gcloud compute forwarding-rules create codeforge-forwarding-rule \
 
 # Get the IP address of the load balancer.
 gcloud compute forwarding-rules list --format="value(IPAddress)"
-
-
-# Delete the vm instance.
-gcloud compute instances delete codeforge-instance-group-432q --zone=us-central1-c --quiet
