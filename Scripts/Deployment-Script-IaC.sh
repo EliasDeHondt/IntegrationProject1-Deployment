@@ -43,6 +43,22 @@ function banner_message() {
   echo "$LINE1" && echo "$line"
 }
 
+# Functie: Checks if there were any options given to the script.
+function options_check() {
+  case "$1" in
+    --create) create_infrastructure 0;;
+    -c) create_infrastructure 0;;
+    --update) create_infrastructure 1;;
+    -u) create_infrastructure 1;;
+    --delete) delete_infrastructure;;
+    -d) delete_infrastructure;;
+    --help) echo -e "*\n* ${yellow}Usage:${reset}\n*   ./Deployment-Script-IaC.sh [OPTION]\n*\n* ${yellow}Options:${reset}\n*   --create, -c    Create the infrastructure.\n*   --update, -u    Update the infrastructure.\n*   --delete, -d    Delete the infrastructure.\n*   --help, -h      Display this help message.\n*"
+    success_exit;;
+    -h) echo -e "*\n* ${yellow}Usage:${reset}\n*   ./Deployment-Script-IaC.sh [OPTION]\n*\n* ${yellow}Options:${reset}\n*   --create, -c    Create the infrastructure.\n*   --update, -u    Update the infrastructure.\n*   --delete, -d    Delete the infrastructure.\n*   --help, -h      Display this help message.\n*"
+    success_exit;;
+  esac
+}
+
 # Functie: Bash validatie.
 function bash_validation() {
   # Check if the script is run using Bash.
@@ -618,48 +634,50 @@ function create_load_balancer() { # Step 21
 
 # Functie: Create the infrastructure.
 function create_infrastructure { # Choice 1 and 3
-  # Asking for the choice of overriding the default variables.
-  echo -e "*"
-  echo -e "* ${yellow}Note: Default = Variables.conf${reset}"
-  read -p "* Do you want to override the default variables? (Y/n): " var_choice
-  if [ "$var_choice" == "Y" ] || [ "$var_choice" == "y" ] || [ -z "$var_choice" ]; then
+  if [ $2 -eq 0 ]; then
+    # Asking for the choice of overriding the default variables.
     echo -e "*"
-    echo -n "* Enter the domain name: "
-    read domain_name
-    echo -n "* Enter the region: "
-    read region
-    echo -n "* Enter the zone: "
-    read zone
-    if [ -z "$domain_name" ] || [ -z "$region" ] || [ -z "$zone" ]; then error_exit "Please enter all the required variables."; fi
-  elif [ "$var_choice" == "n" ]; then
+    echo -e "* ${yellow}Note: Default = Variables.conf${reset}"
+    read -p "* Do you want to override the default variables? (Y/n): " var_choice
+    if [ "$var_choice" == "Y" ] || [ "$var_choice" == "y" ] || [ -z "$var_choice" ]; then
+      echo -e "*"
+      echo -n "* Enter the domain name: "
+      read domain_name
+      echo -n "* Enter the region: "
+      read region
+      echo -n "* Enter the zone: "
+      read zone
+      if [ -z "$domain_name" ] || [ -z "$region" ] || [ -z "$zone" ]; then error_exit "Please enter all the required variables."; fi
+    elif [ "$var_choice" == "n" ]; then
+      echo -e "*"
+      echo -en "* ${geel}Using the default variables.${reset}"
+    else
+      error_exit "Invalid choice."
+    fi
+
+    # Asking for the choice of Debian or Ubuntu for VMs.
+    banner_message "Creating the infrastructure."
     echo -e "*"
-    echo -en "* ${geel}Using the default variables.${reset}"
-  else
-    error_exit "Invalid choice."
-  fi
+    echo -e "* Which OS do you want to use for the VMs? (Default: Ubuntu):\n* ${blue}[1]${reset} Ubuntu\n* ${blue}[2]${reset} Debian\n*"
+    read -p "* Enter your choice: " os_choice
+    if [ "$os_choice" == "1" ] || [ -z "$os_choice" ]; then
+      image_project=ubuntu-os-cloud
+      image_family=ubuntu-2004-lts
+      startup_script=Startup-Script-Gcloud-DotNet-Ubuntu.sh
+    elif [ "$os_choice" == "2" ]; then
+      image_project=debian-cloud
+      image_family=debian-10
+      startup_script=Startup-Script-Gcloud-DotNet-Debian.sh
+    else
+      error_exit "Invalid choice."
+    fi
 
-  # Asking for the choice of Debian or Ubuntu for VMs.
-  banner_message "Creating the infrastructure."
-  echo -e "*"
-  echo -e "* Which OS do you want to use for the VMs? (Default: Ubuntu):\n* ${blue}[1]${reset} Ubuntu\n* ${blue}[2]${reset} Debian\n*"
-  read -p "* Enter your choice: " os_choice
-  if [ "$os_choice" == "1" ] || [ -z "$os_choice" ]; then
-    image_project=ubuntu-os-cloud
-    image_family=ubuntu-2004-lts
-    startup_script=Startup-Script-Gcloud-DotNet-Ubuntu.sh
-  elif [ "$os_choice" == "2" ]; then
-    image_project=debian-cloud
-    image_family=debian-10
-    startup_script=Startup-Script-Gcloud-DotNet-Debian.sh
-  else
-    error_exit "Invalid choice."
+    # Asking for database password.
+    banner_message "Creating the infrastructure."
+    echo -e "*"
+    read -p "* Enter the database password: " db_password
+    if [ -z "$db_password" ]; then error_exit "Please enter the database password."; fi
   fi
-
-  # Asking for database password.
-  banner_message "Creating the infrastructure."
-  echo -e "*"
-  read -p "* Enter the database password: " db_password
-  if [ -z "$db_password" ]; then error_exit "Please enter the database password."; fi
 
   if [ $1 -eq 0 ]; then
     banner_message "Creating the infrastructure."
@@ -888,6 +906,7 @@ function credits() { # Choice 8
 function main { # Start the script.
   banner_message "Welcome to the CodeForge deployment script!"
   bash_validation
+  options_check "$1"
 
   echo -e "*\n* ${blue}[1]${reset} Create the infrastructure\n* ${blue}[2]${reset} Update the infrastructure\n* ${blue}[3]${reset} Delete the infrastructures\n* ${blue}[4]${reset} Backup Configuration\n* ${blue}[5]${reset} View dashboard\n* ${blue}[6]${reset} View Log File\n* ${blue}[7]${reset} Support\n* ${blue}[8]${reset} Credits\n* ${blue}[9]${reset} Exit"
   read -p "* Enter the number of your choice: " choice
@@ -895,12 +914,12 @@ function main { # Start the script.
   case "$choice" in
     1)
       banner_message "Creating the infrastructure."
-      create_infrastructure 0
+      create_infrastructure 0 0
       success_exit "Infrastructure created successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*") (https://$domain_name) $projectid"
       ;;
     2)
       banner_message "Updating the infrastructure."
-      create_infrastructure 1
+      create_infrastructure 1 0
       success_exit "Infrastructure updated successfully. Public IP address of the load balancer: $(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*") (https://$domain_name) $projectid"
       ;;
     3)
@@ -925,4 +944,4 @@ function main { # Start the script.
   esac
 }
 
-main # Start the script.
+main "$1" # Start the script.
