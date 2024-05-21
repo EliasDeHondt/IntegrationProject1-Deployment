@@ -21,6 +21,7 @@ I kindly request your thorough examination and absorption of the comprehensive d
 Please also see following documents:
 - [LICENSE](LICENSE.md)
 - [SECURITY](SECURITY.md)
+- [CONTRIBUTING](CONTRIBUTING.md)
 
 ## 📦Extra
 
