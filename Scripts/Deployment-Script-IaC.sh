@@ -122,10 +122,20 @@ function backup_configuration_select() {
 # Function: Select a project and set it as the current project.
 function select_project() {
   banner_message "Selecting a project."
+
+  local current_project=$(gcloud config get-value project 2>/dev/null)
+  if [ -n "$current_project" ]; then
+    local current_project_name=$(gcloud projects describe $current_project --format="value(name)" 2>/dev/null)
+    echo -e "*\n* Current project Name and ID: ${green}$current_project_name${reset} (${green}$current_project${reset})"
+  else
+    echo -e "*\n* No project currently set."
+  fi
+
   echo -e "*\n* Available projects:"
   gcloud projects list --format="value(projectId)" | nl -w 3 -s "]${reset} " | while read -r line; do echo -e "*   ${blue}[$line"; done
-  echo -e "*\n* Enter the project number or ID: \c"
+  echo -e "*\n* Enter the project ID: \c"
   read project_input
+
   if [[ "$project_input" =~ ^[0-9]+$ ]]; then
     num_projects=$(gcloud projects list --format="value(projectId)" | wc -l)
     if (( project_input <= num_projects )); then
@@ -136,9 +146,15 @@ function select_project() {
   else
     error_exit "Invalid input. Please enter a valid project number."
   fi
-  projectname=$(gcloud projects describe $projectid --format="value(name)")
-  gcloud config set project $projectid > ./deployment-script.log 2>&1
-  echo "* Selected project: $projectname" && projectid=$projectname
+
+  if [ "$current_project" == "$projectid" ]; then
+    echo -e "*\n* Project is already set to ${green}$current_project_name${reset} (${green}$current_project${reset}). No changes made."
+  else
+    projectname=$(gcloud projects describe $projectid --format="value(name)" 2>/dev/null)
+    gcloud config set project $projectid > ./deployment-script.log 2>&1
+    echo -e "*\n* Selected project: ${green}$projectname${reset} (${green}$projectid${reset})"
+  fi
+
   sleep 4
 }
 
@@ -445,7 +461,7 @@ function create_postgres_database() { # Step 14
 
 # Functie: Create a new GCloud Storage bucket if it doesn't already exist.
 function create_storage_bucket() { # Step 15
-  local EXISTING_BUCKET=$(gsutil ls | grep -o "${bucket_name}")
+  local EXISTING_BUCKET=$(gsutil ls | awk -F'/' '{print $3}')
 
   if [ -z "$EXISTING_BUCKET" ]; then
     loading_icon 10 "* Step 15/$global_staps:" &
@@ -482,8 +498,7 @@ function create_service_account() { # Step 16
 
 # Functie: Add permissions to the service account if it doesn't already have them.
 function add_permissions_to_service_account() { # Step 17
-  local ROLE1="roles/storage.admin"
-  local ROLE2="roles/iam.serviceAccountUser"
+  local ROLE="roles/storage.admin"
   local EXISTING_BINDINGS=$(gcloud projects get-iam-policy $projectid --flatten="bindings[].members" --format="value(bindings.members)" | grep -o "serviceAccount:${user_email}")
 
   if [ -z "$EXISTING_BINDINGS" ]; then
@@ -491,12 +506,8 @@ function add_permissions_to_service_account() { # Step 17
     # Add storage permissions
     gcloud projects add-iam-policy-binding $projectid \
       --member=serviceAccount:$user_email \
-      --role=$ROLE1 > ./deployment-script.log 2>&1
+      --role=$ROLE > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
-    # Add gmail permissions
-    gcloud projects add-iam-policy-binding $projectid \
-      --member=serviceAccount:$user_email \
-      --role=$ROLE2 > ./deployment-script.log 2>&1
     wait
 
     if [ $EXIT_CODE -eq 0 ]; then success "Permissions added to the service account successfully."; else error_exit "Failed to add permissions to the service account."; fi
@@ -808,17 +819,44 @@ function backup_configuration_list() { # Choice 4.4
 
 # Functie: View the CodeForge dashboard.
 function view_dashboard() { # Choice 5
-  local IP_ADDRESS=$(gcloud compute forwarding-rules list --format="value(IPAddress)" | grep -o "^[0-9.]*")
-  local NAME=$(gcloud compute forwarding-rules list --format="value(NAME)")
+  local red='\033[0;31m'
+  local green='\033[0;32m'
+  local yellow='\033[1;33m'
+  local reset='\033[0m'
+
+  # Onderdruk foutmeldingen en haal waarden op
+  local IP_ADDRESS=$(gcloud compute forwarding-rules list --format="value(IPAddress)" 2>/dev/null | grep -o "^[0-9.]*")
+  local NAME=$(gcloud compute forwarding-rules list --format="value(NAME)" 2>/dev/null)
   local URL="https://$domain_name"
-  local INSTANCE_GROUP_SIZE=$(gcloud compute instance-groups list --format="value(SIZE)" | grep -o "^[0-9]*")
-  local INSTANCE_GROUP_IPS=$(gcloud compute instances list --format="value(networkInterfaces[0].networkIP)" | tr '\n' ' ')
-  local SQL_IP=$(gcloud sql instances describe $sql_instance_name --format="value(ipAddresses.ipAddress)" | cut -d ';' -f 1)
-  local BUCKET_NAME=$(gsutil ls | grep -o "${bucket_name}")
-  local MIN_REPLICAS=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.minNumReplicas)")
-  local MAX_REPLICAS=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.maxNumReplicas)")
-  local COOL_DOWN_PERIOD=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.coolDownPeriodSec)")
-  local TARGET_CPU_UTILIZATION=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.cpuUtilization.utilizationTarget)")
+  local INSTANCE_GROUP_SIZE=$(gcloud compute instance-groups list --format="value(SIZE)" 2>/dev/null | grep -o "^[0-9]*")
+  local INSTANCE_GROUP_IPS=$(gcloud compute instances list --format="value(networkInterfaces[0].networkIP)" 2>/dev/null | tr '\n' ' ')
+  local SQL_IP=$(gcloud sql instances describe $sql_instance_name --format="value(ipAddresses.ipAddress)" 2>/dev/null | cut -d ';' -f 1)
+  local BUCKET_NAME=$(gsutil ls | awk -F'/' '{print $3}')
+  local MIN_REPLICAS=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.minNumReplicas)" 2>/dev/null)
+  local MAX_REPLICAS=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.maxNumReplicas)" 2>/dev/null)
+  local COOL_DOWN_PERIOD=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.coolDownPeriodSec)" 2>/dev/null)
+  local TARGET_CPU_UTILIZATION=$(gcloud compute instance-groups managed describe $instance_group_name --zone=$zone --format="value(autoscaler.autoscalingPolicy.cpuUtilization.utilizationTarget)" 2>/dev/null)
+
+  # Functie om standaardwaarden in te stellen en in rood af te drukken
+  function check_and_set_default() {
+    local var_value="$1"
+    local default_value="$2"
+
+    if [ -z "$var_value" ]; then echo -e "${red}$default_value${reset}"
+    else echo -e "${green}$var_value${reset}"; fi
+  }
+
+  IP_ADDRESS=$(check_and_set_default "$IP_ADDRESS" "0.0.0.0")
+  NAME=$(check_and_set_default "$NAME" "Unknown")
+  URL=$(check_and_set_default "$URL" "https://example.com")
+  INSTANCE_GROUP_SIZE=$(check_and_set_default "$INSTANCE_GROUP_SIZE" "0")
+  INSTANCE_GROUP_IPS=$(check_and_set_default "$INSTANCE_GROUP_IPS" "No IPs")
+  SQL_IP=$(check_and_set_default "$SQL_IP" "0.0.0.0")
+  BUCKET_NAME=$(check_and_set_default "$BUCKET_NAME" "No Bucket")
+  MIN_REPLICAS=$(check_and_set_default "$MIN_REPLICAS" "0")
+  MAX_REPLICAS=$(check_and_set_default "$MAX_REPLICAS" "0")
+  COOL_DOWN_PERIOD=$(check_and_set_default "$COOL_DOWN_PERIOD" "0 sececonds")
+  TARGET_CPU_UTILIZATION=$(check_and_set_default "$TARGET_CPU_UTILIZATION" "0.0%")
 
   banner_message "Viewing the CodeForge dashboard."
   echo -e "*\n* Load Balancer Information:"
@@ -831,12 +869,31 @@ function view_dashboard() { # Choice 5
   echo -e "*\n* SQL Instance Information:"
   echo -e "*   | IP Address: $SQL_IP"
   echo -e "*\n* Storage Bucket Information:"
-  echo -e "*   | Name: $bucket_name"
+  echo -e "*   | Name: $BUCKET_NAME"
   echo -e "*\n* Horizontal Scaling Information:"
   echo -e "*   | Minimum Replicas: $MIN_REPLICAS"
   echo -e "*   | Maximum Replicas: $MAX_REPLICAS"
-  echo -e "*   | Cool Down Period: $COOL_DOWN_PERIOD"
-  echo -e "*   | Target CPU Utilization: $TARGET_CPU_UTILIZATION"
+  echo -e "*   | Cool Down Period: $COOL_DOWN_PERIOD sececonds"
+  echo -e "*   | Target CPU Utilization: $TARGET_CPU_UTILIZATION%\n*"
+
+  read -p "* Do you want to update the autoscaling settings? (Y/N): " update_autoscaling
+  if [[ "$update_autoscaling" == "Y" || "$update_autoscaling" == "y" ]]; then
+    read -p "* Enter the minimum number of replicas (current: $MIN_REPLICAS): " new_min_replicas
+    read -p "* Enter the maximum number of replicas (current: $MAX_REPLICAS): " new_max_replicas
+    read -p "* Enter the cool down period (current: $COOL_DOWN_PERIOD sececonds): " new_cool_down_period
+    read -p "* Enter the target CPU utilization (current: $TARGET_CPU_UTILIZATION%): " new_target_cpu_utilization
+    echo -n "*"
+
+    gcloud compute instance-groups managed set-autoscaling $instance_group_name \
+      --zone=$zone \
+      --min-num-replicas=${new_min_replicas:-$MIN_REPLICAS} \
+      --max-num-replicas=${new_max_replicas:-$MAX_REPLICAS} \
+      --cool-down-period=${new_cool_down_period:-$COOL_DOWN_PERIOD} \
+      --target-cpu-utilization=${new_target_cpu_utilization:-$TARGET_CPU_UTILIZATION} > ./deployment-script.log 2>&1
+    if [ $? -eq 0 ]; then success "Autoscaling settings updated successfully."; else error_exit "Failed to update the autoscaling settings."; fi
+  else
+    echo -e "* ${yellow}Autoscaling settings not updated.${reset}"
+  fi
   echo -e "*\n* ${yellow}To exit the dashboard, press CTRL + C or wait for 1 minute.${reset}\n*"
   echo -e "${line}"
   sleep 60

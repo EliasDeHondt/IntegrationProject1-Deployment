@@ -61,3 +61,6 @@ gcloud compute forwarding-rules create codeforge-forwarding-rule \
 
 # Get the IP address of the load balancer.
 gcloud compute forwarding-rules list --format="value(IPAddress)"
+
+# Get the status of the dotnet service.
+systemctl status dotnet.service
