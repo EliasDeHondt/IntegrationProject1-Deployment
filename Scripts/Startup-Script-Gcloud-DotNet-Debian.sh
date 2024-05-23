@@ -24,6 +24,7 @@ variables=(
     "ASPNETCORE_EMAIL"
     "ASPNETCORE_EMAIL_PASSWORD"
     "GOOGLE_APPLICATION_CREDENTIALS"
+    "GROQ_API_KEY"
 )
 
 for var in "${variables[@]}"; do
