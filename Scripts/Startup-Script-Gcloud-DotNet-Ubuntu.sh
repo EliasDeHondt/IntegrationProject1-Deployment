@@ -12,6 +12,8 @@ ENV_FILE="/etc/environmentvariables.conf"
 
 export GITLAB_USERNAME=$(curl -s "$URL/GITLAB_USERNAME" -H "Metadata-Flavor: Google")
 export GITLAB_TOKEN=$(curl -s "$URL/GITLAB_TOKEN" -H "Metadata-Flavor: Google")
+export GOOGLE_APPLICATION_CREDENTIALS=$(curl -s "$URL/GOOGLE_APPLICATION_CREDENTIALS" -H "Metadata-Flavor: Google")
+export GOOGLE_APPLICATION_CREDENTIALS_JSON=$(curl -s "$URL/GOOGLE_APPLICATION_CREDENTIALS_JSON" -H "Metadata-Flavor: Google")
 
 variables=(
     "ASPNETCORE_ENVIRONMENT"
@@ -23,8 +25,8 @@ variables=(
     "ASPNETCORE_STORAGE_BUCKET"
     "ASPNETCORE_EMAIL"
     "ASPNETCORE_EMAIL_PASSWORD"
-    "GOOGLE_APPLICATION_CREDENTIALS"
     "GROQ_API_KEY"
+    "GOOGLE_APPLICATION_CREDENTIALS"
 )
 
 for var in "${variables[@]}"; do
@@ -74,6 +76,8 @@ cd /root/development/MVC && dotnet publish /root/development/MVC/MVC.csproj -c R
 mkdir -p /var/www/dotnet
 chown -R www-data:www-data /var/www/dotnet
 cp -r /root/app/* /var/www/dotnet
+
+echo $GOOGLE_APPLICATION_CREDENTIALS_JSON > $GOOGLE_APPLICATION_CREDENTIALS
 
 cat <<EOF > /etc/systemd/system/dotnet.service
 [Unit]
