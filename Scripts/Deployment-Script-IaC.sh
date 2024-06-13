@@ -465,7 +465,7 @@ function create_storage_bucket() { # Step 15
 
   if [ -z "$EXISTING_BUCKET" ]; then
     loading_icon 10 "* Step 15/$global_staps:" &
-    gcloud storage buckets create $bucket_name \
+    gcloud storage buckets create gs://$bucket_name \
       --location=$region > ./deployment-script.log 2>&1
     local EXIT_CODE=$?
     wait
